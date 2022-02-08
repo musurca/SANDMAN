@@ -54,9 +54,9 @@ function Sandman_InputDefaults()
 
 	repeat
 		CRASH_INCIDENCE = Input_Number_Default(
-		"Enter the NORMAL number of crashes an airforce may experience in 100,000 flight hours.\n\nDEFAULT: "..DEFAULT_CRASH_INCIDENCE, 
-		DEFAULT_CRASH_INCIDENCE
-	)
+			"Enter the NORMAL number of crashes an airforce may experience in 100,000 flight hours.\n\nDEFAULT: "..DEFAULT_CRASH_INCIDENCE, 
+			DEFAULT_CRASH_INCIDENCE
+		)
 	until CRASH_INCIDENCE >= 0
 	CRASH_INCIDENCE = CRASH_INCIDENCE/100000
 
