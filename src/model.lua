@@ -82,10 +82,16 @@ end
 -- note: we are omitting the transient inertia term after waking
 function EffectivenessScore(sleep_units, circadian)
 	local ct = circadian * (
-		0.07 + 0.05 * (SLEEP_RESERVOIR_CAPACITY - sleep_units) /SLEEP_RESERVOIR_CAPACITY
+		0.07 + 0.05 * (SLEEP_RESERVOIR_CAPACITY - sleep_units) / SLEEP_RESERVOIR_CAPACITY
 	)
 
-	return sleep_units/SLEEP_RESERVOIR_CAPACITY + ct
+	return math.max(
+		0,
+		math.min(
+			1,
+			sleep_units/SLEEP_RESERVOIR_CAPACITY + ct
+		)
+	)
 end
 
 -- SAFTE model for restorative sleep, based on time of day and sleep debt

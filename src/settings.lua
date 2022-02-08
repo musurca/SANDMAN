@@ -8,8 +8,8 @@ DEFAULT_PARKED_PERCENTAGE = 1/2
 DEFAULT_READYING_PERCENTAGE = 1/6
 
 -- min/max hours awake for pilots at the start of the scenario
-DEFAULT_MIN_HOURS_AWAKE = 4
-DEFAULT_MAX_HOURS_AWAKE = 12
+DEFAULT_MIN_HOURS_AWAKE = 6
+DEFAULT_MAX_HOURS_AWAKE = 14
 
 function Sandman_RefreshSettings()
 	CRASH_INCIDENCE = GetNumber("SANDMAN_DEF_CRASH_INCID")
