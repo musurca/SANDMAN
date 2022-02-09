@@ -1,6 +1,15 @@
 SANDMAN_VERSION = "0.1.0"
 
 function Sandman_Wizard()
+	local result = Input_YesNo("Thanks for using SANDMAN, the fatigue modeling system for CMO.\n\nHave you positioned the camera over the local timezone to use for circadian rhythms?")
+	if result == false then
+		Input_OK("Please position the camera over the local timezone that you'd like to use, then run this script again.")
+		return
+	end
+
+	-- set the local time zone
+	Sandman_SetTimeZone()
+
 	-- remove previous versions of SANDMAN
 	if Event_Exists("SANDMAN: Scenario Loaded") then
         Event_Delete("SANDMAN: Scenario Loaded", true)
@@ -97,7 +106,8 @@ function Sandman_Wizard()
 		)
 	end)
 
-	if Input_YesNo("Thanks for using SANDMAN, the fatigue modeling system for CMO. Do you want to use the suggested values?") then
+	-- set values for model
+	if Input_YesNo("Do you want to use the suggested values for the fatigue model?") then
 		Sandman_UseDefaults()
 	else
 		Sandman_InputDefaults()

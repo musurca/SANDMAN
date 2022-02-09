@@ -65,17 +65,8 @@ end
 
 -- SAFTE model of effect of circadian rhythm
 function CircadianTerm()
-	local localtime = ScenEdit_CurrentLocalTime()
-	local hr = tonumber(
-		string.sub(localtime, 1, 2)
-	)
-	local min = tonumber(
-		string.sub(localtime, 4, 5)
-	)
-	local t = hr + min/60
-
-	local ct = math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
-	return ct
+	local t = Sandman_GetLocalHour()
+	return math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
 end
 
 -- SAFTE model effectiveness score
