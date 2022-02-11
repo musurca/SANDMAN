@@ -9,7 +9,7 @@ Fatigue modeling for *Command: Modern Operations*
 Using the *Fatigue Avoidance Scheduling Tool* (available from the Special Actions menu), you can monitor the effectiveness of your pilots, and attempt to stand down particularly exhausted pilots for rest.
 
 ### How do I add it to my scenario?
-1) Download the latest release.
+1) Download the [latest release](https://github.com/musurca/SANDMAN/releases/download/v0.1.0/SANDMAN_v0.1.1.zip).
 2) Open your scenario in the Scenario Editor.
 2) Go to Editor -> Lua Script Console
 3) Paste the contents of the file `sandman_min.lua` into the white box, then click **Run**.
@@ -48,3 +48,12 @@ This will produce compiled but unminified Lua code in `debug/sandman_debug.lua`.
 
 #### Why is the build process so complicated?
 **SANDMAN** works by injecting its own code into a *CMO* LuaScript event action which is executed upon every scenario load. The build process converts the **SANDMAN** source into a minified, escaped string which is then re-embedded into its own code.
+
+### Version History
+v0.1.1 (2/10/2022):
+* added: API functions for scenario authors
+* changed: increased micronap risk
+* fixed: reinstalling SANDMAN resets proficiencies 
+
+v0.1.0 (2/9/2022):
+* Initial release.

@@ -130,7 +130,7 @@ end
 --[[
 This function is purely speculative, but based on the literature that indicates
 that micronaps are extremely common in sleep-deprived flight crews.
-ex: at 3 AM, an 80% effective pilot (up for 20+ hrs) has a 0.29%
+ex: at 3 AM, an 80% effective pilot (up for 20+ hrs) has a 1.7%
 chance of taking a micronap every minute
 ]]--
 function MicroNapRisk(interval, effect_score, circadian)
@@ -141,5 +141,8 @@ function MicroNapRisk(interval, effect_score, circadian)
 	else
         tod_risk = 1 / (1 + 2*(circadian/1.2999))
     end
-	return interval*tod_risk*base_risk*base_risk*base_risk/600
+	return math.min(
+		0.95,
+		interval*tod_risk*base_risk*base_risk*base_risk/100
+	)
 end
