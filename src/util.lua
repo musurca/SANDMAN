@@ -70,9 +70,9 @@ end
 No math.round in Lua. Should return integers only
 ]]--
 function Round(n)
-	return tonumber(
-		math.floor(n + 0.5)
-	)
+    return tonumber(
+        math.floor(n + 0.5)
+    )
 end
 
 --[[
@@ -82,10 +82,10 @@ iterate through it. This function does this for you, and returns false
 immediately if the dictionary is populated.
 ]]--
 function DictionaryEmpty(dict)
-	for k, val in pairs(dict) do
-		return false
-	end
-	return true
+    for k, val in pairs(dict) do
+        return false
+    end
+    return true
 end
 
 --[[
@@ -240,12 +240,12 @@ end
 Stores an array of strings persistently. 
 ]]--
 function StoreArrayString(id, arr)
-	local blob = ""
-	for i=1,#arr-1 do
-		blob = blob..tostring(arr[i]).."∧"
-	end
-	blob = blob..tostring(arr[#arr])
-	StoreString(id, blob)
+    local blob = ""
+    for i=1,#arr-1 do
+        blob = blob..tostring(arr[i]).."∧"
+    end
+    blob = blob..tostring(arr[#arr])
+    StoreString(id, blob)
 end
 
 --[[
@@ -253,21 +253,21 @@ Retrieves a stored array of strings.
 ]]--
 function GetArrayString(id)
     return String_Split(
-		GetString(id),
-		"∧"
-	)
+        GetString(id),
+        "∧"
+    )
 end
 
 --[[
 Stores an array of strings persistently. 
 ]]--
 function StoreArrayNumber(id, arr)
-	local blob = ""
-	for i=1,#arr-1 do
-		blob = blob..tostring(arr[i]).."∧"
-	end
-	blob = blob..tostring(arr[#arr])
-	StoreString(id, blob)
+    local blob = ""
+    for i=1,#arr-1 do
+        blob = blob..tostring(arr[i]).."∧"
+    end
+    blob = blob..tostring(arr[#arr])
+    StoreString(id, blob)
 end
 
 --[[
@@ -275,11 +275,11 @@ Retrieves a stored array of strings.
 ]]--
 function GetArrayNumber(id)
     local arr = String_Split(
-		GetString(id),
-		"∧"
-	)
-	for i=1,#arr do
-		arr[i] = tonumber(arr[i])
+        GetString(id),
+        "∧"
+    )
+    for i=1,#arr do
+        arr[i] = tonumber(arr[i])
     end
     return arr
 end
