@@ -1,5 +1,10 @@
 -- interval in seconds
 function Sandman_Update(interval)
+	-- quit if disabled
+	if Sandman_IsEnabled() == false then
+		return
+	end
+
 	-- initialize the unit tracker if it hasn't already been
 	Sandman_CheckInit()
 

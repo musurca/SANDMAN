@@ -57,9 +57,9 @@ function ProfNameByNumber(profnum)
 	return UNIT_PROFICIENCIES[profnum]
 end
 
-function RandomSleepDeficit()
+function RandomSleepDeficit(min_hrs, max_hrs)
 	local std_rnd = math.random()*math.random()
-	local hrs = MIN_HOURS_AWAKE+std_rnd*(MAX_HOURS_AWAKE-MIN_HOURS_AWAKE)
+	local hrs = min_hrs+std_rnd*(max_hrs-min_hrs)
 	return SLEEP_UNITS_LOST_MIN*60*hrs
 end
 

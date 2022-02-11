@@ -1,4 +1,4 @@
-SANDMAN_VERSION = "0.1.0"
+SANDMAN_VERSION = "0.1.1"
 
 function Sandman_Wizard()
 	local result = Input_YesNo("Thanks for using SANDMAN, the fatigue modeling system for CMO.\n\nHave you positioned the camera over the local timezone to use for circadian rhythms?")
@@ -113,5 +113,11 @@ function Sandman_Wizard()
 		Sandman_InputDefaults()
 	end
 
+	-- reset unit tracker
+	StoreBoolean("UNIT_TRACKER_INITIALIZED", false)
+
+	-- enable SANDMAN
+	Sandman_Enable()
+	
 	Input_OK("SANDMAN v"..SANDMAN_VERSION.." has been installed into this scenario!")
 end

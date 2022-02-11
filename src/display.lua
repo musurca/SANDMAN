@@ -155,8 +155,7 @@ function Sandman_Display(selected_guids)
 	ScenEdit_SpecialMessage("playerside", msg_body)
 
 	-- if we're running IKE as well, we need to flush the msg queue
-	local ike_check = ScenEdit_GetKeyValue("__SCEN_SETUPPHASE")
-	if ike_check ~= "" then
+	if Sandman_HasIKE() == true then
 		if PBEM_FlushSpecialMessages then
 			PBEM_FlushSpecialMessages()
 		end

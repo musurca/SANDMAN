@@ -1,6 +1,6 @@
 --[[
 ---------------------------------------------------------------------------------
-SANDMAN v0.1.0b by Nicholas Musurca (nick.musurca@gmail.com)
+SANDMAN v0.1.1 by Nicholas Musurca (nick.musurca@gmail.com)
 Licensed under GNU GPLv3. (https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 ---------------------------------------------------------------------------------
 

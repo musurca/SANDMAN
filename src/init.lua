@@ -21,7 +21,7 @@ function Sandman_Init()
 
 	for k, v in ipairs(tracked_guids) do
 		local ac = ScenEdit_GetUnit({guid=v})
-		unit_sleepres[k] = SLEEP_RESERVOIR_CAPACITY - RandomSleepDeficit() - SLEEP_UNITS_LOST_MIN*ac.airbornetime_v/60
+		unit_sleepres[k] = SLEEP_RESERVOIR_CAPACITY - RandomSleepDeficit(MIN_HOURS_AWAKE, MAX_HOURS_AWAKE) - SLEEP_UNITS_LOST_MIN*ac.airbornetime_v/60
 		unit_profs[k] = ProfNumberByName(ac.proficiency)
 		unit_effect[k] = EffectivenessScore(unit_sleepres[k], circadian)
 		unit_reststate[k] = RestStateByCondition(ac.condition_v, circadian)
@@ -55,4 +55,9 @@ function Sandman_CheckInit()
 	if GetBoolean("UNIT_TRACKER_INITIALIZED") == false then
 		Sandman_Init()
 	end
+end
+
+--true if IKE is installed in this scenario
+function Sandman_HasIKE()
+	return ScenEdit_GetKeyValue("__SCEN_SETUPPHASE") ~= ""
 end
