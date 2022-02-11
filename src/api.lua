@@ -32,6 +32,9 @@ end
 -- For scenario authors to query unit effectiveness.
 -- Returns as fraction [0-1] representing percentage
 function Sandman_GetEffectiveness(guid)
+	-- initialize the unit tracker if it hasn't already been
+	Sandman_CheckInit()
+	
 	local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
 	local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
 	for k, id in ipairs(tracked_guids) do
@@ -45,6 +48,9 @@ end
 -- For scenario authors to query unit crash risk per hour.
 -- Returns as fraction [0-1] representing percentage
 function Sandman_GetCrashRisk(guid)
+	-- initialize the unit tracker if it hasn't already been
+	Sandman_CheckInit()
+
 	local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
 	local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
 	for k, id in ipairs(tracked_guids) do
@@ -72,6 +78,9 @@ end
 -- For scenario authors to query unit micronap risk per hour.
 -- Returns as fraction [0-1] representing percentage
 function Sandman_GetMicroNapRisk(guid)
+	-- initialize the unit tracker if it hasn't already been
+	Sandman_CheckInit()
+
 	local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
 	local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
 	for k, id in ipairs(tracked_guids) do
