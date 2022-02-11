@@ -61,3 +61,64 @@ end
 function Sandman_HasIKE()
 	return ScenEdit_GetKeyValue("__SCEN_SETUPPHASE") ~= ""
 end
+
+--reset tracked aircraft to their base proficiency
+function Sandman_Clear()
+	if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then
+		local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
+		local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
+
+		for k, id in ipairs(tracked_guids) do
+			local _, unit = pcall(
+				ScenEdit_GetUnit,
+				{
+					guid=id
+				}
+			)
+	
+			-- reset original unit proficiency
+			if unit then
+				pcall(
+					ScenEdit_SetUnit,
+					{
+						guid=id,
+						proficiency=ProfNameByNumber(unit_profs[k])
+					}
+				)
+			end
+		end
+	end
+end
+
+--restore tracked aircraft to their fatigue-related proficiency
+function Sandman_Restore()
+	if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then
+		local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
+		local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
+		local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
+
+		for k, id in ipairs(tracked_guids) do
+			local _, unit = pcall(
+				ScenEdit_GetUnit,
+				{
+					guid=id
+				}
+			)
+	
+			if unit then
+				local prof_name = ProfNameByNumber(
+					ProfByEffectiveness(unit_profs[k], unit_effect[k])
+				)
+				if unit.proficiency ~= prof_name then
+					pcall(
+						ScenEdit_SetUnit,
+						{
+							guid=id,
+							proficiency=prof_name
+						}
+					)
+				end
+			end
+		end
+	end
+end

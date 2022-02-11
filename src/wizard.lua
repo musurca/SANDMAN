@@ -30,6 +30,7 @@ function Sandman_Wizard()
 	if Event_Exists("SANDMAN: Update Tick") then
 		Event_Delete("SANDMAN: Update Tick", true)
 	end
+	Sandman_Clear()
 
 	-- initialize SANDMAN on load by injecting its own code into the VM
     local loadEvent = Event_Create(
