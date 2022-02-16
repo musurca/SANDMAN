@@ -50,8 +50,12 @@ This will produce compiled but unminified Lua code in `debug/sandman_debug.lua`.
 **SANDMAN** works by injecting its own code into a *CMO* LuaScript event action which is executed upon every scenario load. The build process converts the **SANDMAN** source into a minified, escaped string which is then re-embedded into its own code.
 
 ### Version History
-v0.1.2 (????):
+v0.2.0 (????):
+* added: support for reserve crews
+* added: timezone by unit
+* added: multicrew model
 * changed: calling Enable/Disable() adds & removes special actions
+* fixed: implemented custom PRNG to replace math.random()
 
 v0.1.1 (2/10/2022):
 * added: API functions for scenario authors

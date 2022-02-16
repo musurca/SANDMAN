@@ -68,11 +68,7 @@ function RandomSleepDeficit(min_hrs, max_hrs)
 end
 
 -- SAFTE model of effect of circadian rhythm
-function CircadianTerm()
-    local t = Sandman_GetLocalHour()
-    return math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
-end
-
+-- t = local time
 function CustomCircadianTerm(t)
     return math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
 end
