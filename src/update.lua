@@ -8,17 +8,12 @@ function Sandman_Update(interval)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
-    local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-    local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
-    local unit_sleepres = GetArrayNumber("UNIT_TRACKER_SLEEPRES")
-    local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
-    local unit_reststate = GetArrayNumber("UNIT_TRACKER_RESTSTATE")
-    local unit_boltered = GetArrayNumber("UNIT_TRACKER_BOLTER")
-    local unit_micronapping = GetArrayNumber("UNIT_TRACKER_MICRONAP")
+    local sandman = Sandman_GetState()
+    local unit_state = sandman.unit_state
+    local unit_micronapping = unit_state.is_micronapping
+    local unit_boltered = unit_state.has_boltered
 
-    local circadian = CircadianTerm()
-
-    for k, id in ipairs(tracked_guids) do
+    for k, id in ipairs(unit_state.guids) do
         local _, unit = pcall(
             ScenEdit_GetUnit,
             {
@@ -30,7 +25,6 @@ function Sandman_Update(interval)
             -- only update units not under maintenance
             if unit.loadoutdbid ~= 4 then
                 local interval_resting = 0
-                local sleep_units = unit_sleepres[k]
                 if unit.condition_v == "Parked" then
                     -- most effective rest
                     interval_resting = interval*PARKED_PERCENTAGE
@@ -40,34 +34,15 @@ function Sandman_Update(interval)
                 end
                 -- otherwise we're totally awake
                 local interval_active = interval - interval_resting
-                local units_gained = 0
-                if interval_resting > 0 then
-                    units_gained = RestorativeSleep(
-                        interval_resting,
-                        sleep_units,
-                        circadian
-                    )
-                end
-                local units_lost = SLEEP_UNITS_LOST_MIN*interval_active/60
-                sleep_units = sleep_units + units_gained - units_lost
-                sleep_units = math.min(
-                    SLEEP_RESERVOIR_CAPACITY,
-                    math.max(
-                        0,
-                        sleep_units
-                    )
+
+                local new_prof_name = Sandman_UpdateUnit(
+                    sandman,
+                    k,
+                    unit,
+                    interval_active,
+                    interval_resting
                 )
-                unit_sleepres[k] = sleep_units
-                unit_reststate[k] = RestStateByCondition(unit.condition_v, circadian)
-
-                -- set effectiveness by hours awake
-                local base_prof = unit_profs[k]
-                local cur_effect = EffectivenessScore(sleep_units, circadian)
-                unit_effect[k] = cur_effect
-
-                -- set proficiency by effectiveness
-                local new_prof = ProfByEffectiveness(base_prof, cur_effect)
-                local new_prof_name = ProfNameByNumber(new_prof)
+                
                 if unit.proficiency ~= new_prof_name then
                     pcall(
                         ScenEdit_SetUnit,
@@ -116,10 +91,18 @@ function Sandman_Update(interval)
                     )
                 end
 
+                local cur_effect = unit_state.effects[k]
+                local circadian = CustomCircadianTerm(
+                    GetLocalTime(unit.longitude)
+                )
+
                 -- check if we've been caught nappin'
                 if unit.airbornetime_v > 0 then
-                    local dice_roll = math.random()
+                    local dice_roll = Random()
                     local nap_risk = MicroNapRisk(interval, cur_effect, circadian)
+                    -- divide nap risk by number of crew members
+                    nap_risk = nap_risk / unit_state.crewsizes[k]
+                    
                     if unit_micronapping[k] == 1 then
                         -- if already napping, twice as likely to continue
                         if dice_roll*2 > nap_risk then
@@ -151,7 +134,7 @@ function Sandman_Update(interval)
                 if unit.condition == "On final approach" or unit.condition == "In landing queue" then
                     if unit.base then
                         local crash_risk = CrashRisk(interval, cur_effect, unit.base)
-                        local dice_roll = math.random()
+                        local dice_roll = Random()
                         if dice_roll <= crash_risk then
                             local preposition = "at"
                             if unit.base.type == "Ship" then
@@ -171,7 +154,7 @@ function Sandman_Update(interval)
                             })
                         else
                             -- a go-around/bolter is 100x more likely
-                            if dice_roll*100 <= crash_risk then
+                            if Clamp(dice_roll*100, 0, 0.95) <= crash_risk then
                                 unit:RTB(false)
                                 unit_boltered[k] = 1
                             end
@@ -182,9 +165,7 @@ function Sandman_Update(interval)
         end
     end
 
-    StoreArrayNumber("UNIT_TRACKER_SLEEPRES", unit_sleepres)
-    StoreArrayNumber("UNIT_TRACKER_EFFECT", unit_effect)
-    StoreArrayNumber("UNIT_TRACKER_RESTSTATE", unit_reststate)
-    StoreArrayNumber("UNIT_TRACKER_BOLTER", unit_boltered)
-    StoreArrayNumber("UNIT_TRACKER_MICRONAP", unit_micronapping)
+    -- TODO: update reserve crews
+
+    Sandman_StoreState(sandman)
 end

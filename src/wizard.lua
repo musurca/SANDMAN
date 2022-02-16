@@ -1,7 +1,7 @@
-SANDMAN_VERSION = "0.1.2"
+SANDMAN_VERSION = "0.2.0"
 
 function Sandman_Wizard()
-    local result = Input_YesNo("Thanks for using SANDMAN, the fatigue modeling system for CMO.\n\nHave you positioned the camera over the local timezone to use for circadian rhythms?")
+    local result = Input_YesNo("Thanks for using SANDMAN v"..SANDMAN_VERSION..", the fatigue modeling system for CMO.\n\nHave you positioned the camera over the local timezone to use for circadian rhythms?")
     if result == false then
         Input_OK("Please position the camera over the local timezone that you'd like to use, then run this script again.")
         return

@@ -21,12 +21,11 @@ function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
-    local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-    local unit_sleepres = GetArrayNumber("UNIT_TRACKER_SLEEPRES")
-    local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
-    local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
+    local sandman = Sandman_GetState()
+    local unit_state = sandman.unit_state
+    local crew_state = sandman.crew_state
 
-    for k, id in ipairs(tracked_guids) do
+    for k, id in ipairs(unit_state.guids) do
         if id == guid then
             local _, unit = pcall(
                 ScenEdit_GetUnit,
@@ -35,12 +34,27 @@ function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs)
                 }
             )
             if unit then
-                local circadian = CircadianTerm()
+                local circadian = CustomCircadianTerm(
+                    GetLocalTime(unit.longitude)
+                )
 
-                unit_sleepres[k] = SLEEP_RESERVOIR_CAPACITY - RandomSleepDeficit(min_hrs, max_hrs)
-                unit_effect[k] = EffectivenessScore(unit_sleepres[k], circadian)
+                local crewnum = unit_state.crewsizes[k]
+                local crewindex = unit_state.crewindices[k]
+                local effect_avg = 0
+                for i=1, crewnum do
+                    local ci = crewindex + i - 1
+                    local sleep_units = SLEEP_RESERVOIR_CAPACITY - RandomSleepDeficit(min_hrs, max_hrs)
+                    local effect = EffectivenessScore(sleep_units, circadian)
+                    crew_state.sleep_units[ci] = sleep_units
+                    crew_state.effects[ci] = effect
+                    effect_avg = effect_avg + effect
+                end
+                effect_avg = effect_avg / crewnum
+                unit_state.effects[k] = effect_avg
+                local baseprof = unit_state.baseprofs[k]
+
                 local prof_name = ProfNameByNumber(
-                    ProfByEffectiveness(unit_profs[k], unit_effect[k])
+                    ProfByEffectiveness(baseprof, effect_avg)
                 )
                 if unit.proficiency ~= prof_name then
                     ScenEdit_SetUnit({
@@ -49,8 +63,7 @@ function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs)
                     })
                 end
                 
-                StoreArrayNumber("UNIT_TRACKER_SLEEPRES", unit_sleepres)
-                StoreArrayNumber("UNIT_TRACKER_EFFECT", unit_effect)
+                Sandman_StoreState(sandman)
                 
                 return true
             end
@@ -67,11 +80,11 @@ function Sandman_GetEffectiveness(guid)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
-    local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-    local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
-    for k, id in ipairs(tracked_guids) do
+    local unit_states = Sandman_GetUnitState()
+
+    for k, id in ipairs(unit_states.guids) do
         if id == guid then
-            return unit_effect[k]
+            return unit_states.effects[k]
         end
     end
     return 1
@@ -83,9 +96,9 @@ function Sandman_GetCrashRisk(guid)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
-    local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-    local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
-    for k, id in ipairs(tracked_guids) do
+    local unit_state = Sandman_GetUnitState()
+
+    for k, id in ipairs(unit_state.guids) do
         if id == guid then
             local _, u = pcall(
                 ScenEdit_GetUnit,
@@ -95,7 +108,11 @@ function Sandman_GetCrashRisk(guid)
             )
             if u then
                 if u.base then
-                    return CrashRisk(3600, unit_effect[k], u.base)
+                    return CrashRisk(
+                        3600,
+                        unit_state.effects[k],
+                        u.base
+                    )
                 else
                     break
                 end
@@ -113,9 +130,9 @@ function Sandman_GetMicroNapRisk(guid)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
-    local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-    local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
-    for k, id in ipairs(tracked_guids) do
+    local unit_state = Sandman_GetUnitState()
+
+    for k, id in ipairs(unit_state.guids) do
         if id == guid then
             local _, u = pcall(
                 ScenEdit_GetUnit,
@@ -126,8 +143,12 @@ function Sandman_GetMicroNapRisk(guid)
             if u then
                 return MicroNapRisk(
                     3600,
-                    unit_effect[k],
-                    CircadianTerm()
+                    unit_state.effects[k],
+                    CustomCircadianTerm(
+                        GetLocalTime(
+                            u.longitude
+                        )
+                    )
                 )
             else
                 break

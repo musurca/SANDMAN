@@ -10,28 +10,14 @@ function Sandman_Init()
         end
     end
 
-    local circadian = CircadianTerm()
-
-    local unit_profs = {}
-    local unit_sleepres = {}
-    local unit_effect = {}
-    local unit_reststate = {}
-    local unit_boltered = {}
-    local unit_micronapping = {}
+    local sandman = Sandman_NewState()
 
     for k, v in ipairs(tracked_guids) do
         local ac = ScenEdit_GetUnit({guid=v})
-        unit_sleepres[k] = SLEEP_RESERVOIR_CAPACITY - RandomSleepDeficit(MIN_HOURS_AWAKE, MAX_HOURS_AWAKE) - SLEEP_UNITS_LOST_MIN*ac.airbornetime_v/60
-        unit_profs[k] = ProfNumberByName(ac.proficiency)
-        unit_effect[k] = EffectivenessScore(unit_sleepres[k], circadian)
-        unit_reststate[k] = RestStateByCondition(ac.condition_v, circadian)
-        unit_boltered[k] = 0
-        unit_micronapping[k] = 0
+        local uindex = Sandman_AddUnit(sandman, ac)
 
         -- set initial proficiency
-        local prof_name = ProfNameByNumber(
-            ProfByEffectiveness(unit_profs[k], unit_effect[k])
-        )
+        local prof_name = Sandman_GetUnitProficiency(sandman, uindex)
         if ac.proficiency ~= prof_name then
             ScenEdit_SetUnit({
                 guid=v,
@@ -40,13 +26,7 @@ function Sandman_Init()
         end
     end
 
-    StoreArrayString("UNIT_TRACKER_GUIDS", tracked_guids)
-    StoreArrayNumber("UNIT_TRACKER_BASE_PROFS", unit_profs)
-    StoreArrayNumber("UNIT_TRACKER_SLEEPRES", unit_sleepres)
-    StoreArrayNumber("UNIT_TRACKER_EFFECT", unit_effect)
-    StoreArrayNumber("UNIT_TRACKER_RESTSTATE", unit_reststate)
-    StoreArrayNumber("UNIT_TRACKER_BOLTER", unit_boltered)
-    StoreArrayNumber("UNIT_TRACKER_MICRONAP", unit_micronapping)
+    Sandman_StoreState(sandman)
 
     StoreBoolean("UNIT_TRACKER_INITIALIZED", true)
 end
@@ -101,24 +81,24 @@ end
 --reset tracked aircraft to their base proficiency
 function Sandman_Clear()
     if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then
-        local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-        local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
+        local unit_state = Sandman_GetUnitState()
 
-        for k, id in ipairs(tracked_guids) do
+        for k, id in ipairs(unit_state.guids) do
+            local baseprof = unit_state.baseprofs[k]
             local _, unit = pcall(
                 ScenEdit_GetUnit,
                 {
                     guid=id
                 }
             )
-    
+
             -- reset original unit proficiency
             if unit then
                 pcall(
                     ScenEdit_SetUnit,
                     {
                         guid=id,
-                        proficiency=ProfNameByNumber(unit_profs[k])
+                        proficiency=ProfNameByNumber(baseprof)
                     }
                 )
             end
@@ -129,11 +109,10 @@ end
 --restore tracked aircraft to their fatigue-related proficiency
 function Sandman_Restore()
     if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then
-        local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-        local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
-        local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
-
-        for k, id in ipairs(tracked_guids) do
+        local sandman = Sandman_GetState()
+        local unit_state = sandman.unit_state
+        
+        for k, id in ipairs(unit_state.guids) do
             local _, unit = pcall(
                 ScenEdit_GetUnit,
                 {
@@ -142,9 +121,8 @@ function Sandman_Restore()
             )
     
             if unit then
-                local prof_name = ProfNameByNumber(
-                    ProfByEffectiveness(unit_profs[k], unit_effect[k])
-                )
+                -- set initial proficiency
+                local prof_name = Sandman_GetUnitProficiency(sandman, k)
                 if unit.proficiency ~= prof_name then
                     pcall(
                         ScenEdit_SetUnit,

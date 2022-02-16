@@ -76,6 +76,13 @@ function Round(n)
 end
 
 --[[
+Clamp number to [low, high]
+]]--
+function Clamp(n, low, high)
+    return math.min(high, math.max(n, low))
+end
+
+--[[
 In Lua, you cannot quickly determine whether a dictionary has entries in it
 via the # syntax (e.g. #dict > 0), and must instead initialize a loop to
 iterate through it. This function does this for you, and returns false

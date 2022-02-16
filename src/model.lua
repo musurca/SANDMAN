@@ -57,15 +57,23 @@ function ProfNameByNumber(profnum)
     return UNIT_PROFICIENCIES[profnum]
 end
 
-function RandomSleepDeficit(min_hrs, max_hrs)
-    local std_rnd = math.random()*math.random()
-    local hrs = min_hrs+std_rnd*(max_hrs-min_hrs)
+function SleepDeficit(hrs)
     return SLEEP_UNITS_LOST_MIN*60*hrs
+end
+
+function RandomSleepDeficit(min_hrs, max_hrs)
+    local std_rnd = Random()*Random()
+    local hrs = min_hrs+std_rnd*(max_hrs-min_hrs)
+    return SleepDeficit(hrs)
 end
 
 -- SAFTE model of effect of circadian rhythm
 function CircadianTerm()
     local t = Sandman_GetLocalHour()
+    return math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
+end
+
+function CustomCircadianTerm(t)
     return math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
 end
 
@@ -76,12 +84,10 @@ function EffectivenessScore(sleep_units, circadian)
         0.07 + 0.05 * (SLEEP_RESERVOIR_CAPACITY - sleep_units) / SLEEP_RESERVOIR_CAPACITY
     )
 
-    return math.max(
+    return Clamp(
+        sleep_units/SLEEP_RESERVOIR_CAPACITY + ct,
         0,
-        math.min(
-            1,
-            sleep_units/SLEEP_RESERVOIR_CAPACITY + ct
-        )
+        1
     )
 end
 
@@ -124,7 +130,12 @@ function CrashRisk(interval, effect_score, base)
             4 * (weather.seastate-9) / 9
         )
     end
-    return math.min(0.95, risk_factor*CRASH_INCIDENCE*timestep)
+
+    return Clamp(
+        risk_factor*CRASH_INCIDENCE*timestep,
+        0,
+        0.95
+    )
 end
 
 --[[
@@ -141,8 +152,10 @@ function MicroNapRisk(interval, effect_score, circadian)
     else
         tod_risk = 1 / (1 + 2*(circadian/1.2999))
     end
-    return math.min(
-        0.95,
-        interval*tod_risk*base_risk*base_risk*base_risk/100
+
+    return Clamp(
+        interval*tod_risk*base_risk*base_risk*base_risk/100,
+        0,
+        0.95
     )
 end

@@ -13,7 +13,7 @@ SANDMAN_SRC_PATH="./src"
 
 # Edit these lines to add new source files to the build.
 # Files are added in the order that they are listed.
-SANDMAN_LOADER_INCLUDE=("util.lua" "settings.lua" "time.lua" "model.lua" "init.lua" "display.lua" "api.lua" "update.lua" "editor.lua" "wizard.lua")
+SANDMAN_LOADER_INCLUDE=("util.lua" "bit.lua" "prng.lua" "settings.lua" "time.lua" "model.lua" "state.lua" "init.lua" "display.lua" "api.lua" "update.lua" "editor.lua" "wizard.lua")
 
 # -------DO NOT EDIT BELOW THIS LINE--------
 SANDMAN_LOADERINIT="xx_loader.lua"

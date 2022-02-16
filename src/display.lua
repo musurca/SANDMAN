@@ -13,10 +13,7 @@ function Sandman_Display(selected_guids)
     local table_footer = "</tbody></table>"
     local msg_body = ""
 
-    local tracked_guids = GetArrayString("UNIT_TRACKER_GUIDS")
-    local unit_profs = GetArrayNumber("UNIT_TRACKER_BASE_PROFS")
-    local unit_effect = GetArrayNumber("UNIT_TRACKER_EFFECT")
-    local unit_reststate = GetArrayNumber("UNIT_TRACKER_RESTSTATE")
+    local unit_state = Sandman_GetUnitState()
 
     local function start_table()
         msg_body = msg_body..table_header
@@ -56,7 +53,7 @@ function Sandman_Display(selected_guids)
     local units_selected = 0
 
     -- collect units and group them by type
-    for k, id in ipairs(tracked_guids) do
+    for k, id in ipairs(unit_state.guids) do
         local _, unit = pcall(
             ScenEdit_GetUnit,
             {
@@ -127,11 +124,14 @@ function Sandman_Display(selected_guids)
                             unit.name
                         )
                         add_column(
-                            ProfNameByNumber(unit_profs[k])
+                            ProfNameByNumber(unit_state.baseprofs[k])
                         )
-                        local rest_arrow = UNIT_RESTSTATES[unit_reststate[k]]
+                        local rest_arrow = UNIT_RESTSTATES[
+                            unit_state.reststates[k]
+                        ]
+                        local unit_effect = unit_state.effects[k]
                         add_column(
-                            "<center>"..Round(unit_effect[k]*100).."% "..rest_arrow.."</center>"
+                            "<center>"..Round(unit_effect*100).."% "..rest_arrow.."</center>"
                         )
                         end_row()
                     end
