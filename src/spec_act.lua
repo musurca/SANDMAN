@@ -82,7 +82,7 @@ function Sandman_InputReserveThreshold()
     RESERVE_REPLACE_THRESHOLD[sidenum] = thresh/100
     StoreArrayNumber("SANDMAN_DEF_RESERVE_THRESH", RESERVE_REPLACE_THRESHOLD)
     
-    Input_OK("Pilots will now be replaced when below "..thresh.."% effectiveness.")
+    Input_OK("Pilots will now be replaced when they fall below "..thresh.."% effectiveness.")
 end
 
 function Sandman_Display(selected_guids)
@@ -90,7 +90,7 @@ function Sandman_Display(selected_guids)
     Sandman_CheckInit()
 
     -- formatting for our old-skool HTML tables
-    local table_names = { "UNIT DESIGNATION", "SKILL", "EFFECTIVENESS" }
+    local table_names = { "UNIT DESIGNATION", "SKILL", "P.A.T.", "EFFECTIVENESS" }
     local table_header = "<table cellSpacing=1 cols="..#table_names.." cellPadding=1 width=\"95%\" border=2><tbody>"
     table_header = table_header.."<tr>"
     for k, tname in ipairs(table_names) do
@@ -101,6 +101,7 @@ function Sandman_Display(selected_guids)
     local msg_body = ""
 
     local unit_state = Sandman_GetUnitState()
+    local crew_state = Sandman_GetCrewState()
 
     local function start_table()
         msg_body = msg_body..table_header
@@ -207,12 +208,38 @@ function Sandman_Display(selected_guids)
                         local k = tonumber(n)
                         -- display row for unit
                         start_row()
+
+                        -- UNIT DESIGNATION
                         add_column(
                             unit.name
                         )
+
+                        -- SKILL
                         add_column(
                             ProfNameByNumber(unit_state.baseprofs[k])
                         )
+
+                        -- P.A.T.
+                        local cindex = unit_state.crewindices[k]
+                        local circadian_hr = crew_state.circadian_hr[cindex]
+                        local time_diff = GetLocalTimeDifference(unit.longitude)
+                        local tz_dff = (time_diff - circadian_hr + 12) % 24 - 12
+                        local pat = (18 + tz_dff) % 24
+                        local pat_hr = math.floor(pat)
+                        local pat_min = Round((pat - pat_hr)*60)
+                        local pat_hr_str = tostring(pat_hr)
+                        local pat_min_str = tostring(pat_min)
+                        if string.len(pat_hr_str) == 1 then
+                            pat_hr_str = "0"..pat_hr_str
+                        end
+                        if string.len(pat_min_str) == 1 then
+                            pat_min_str = "0"..pat_min_str
+                        end
+                        add_column(
+                            pat_hr_str..pat_min_str
+                        )
+
+                        -- EFFECTIVENESS
                         local rest_arrow = UNIT_RESTSTATES[
                             unit_state.reststates[k]
                         ]
