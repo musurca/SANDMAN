@@ -37,11 +37,13 @@ function RestStateByCondition(condition_v, circadian)
 end
 
 function ProfByEffectiveness(baseprof, effect)
-    return tonumber(
+    local num_profs = #UNIT_PROFICIENCIES
+    local delta = num_profs - tonumber(
         math.floor(
-            (0.25+baseprof-1) * effect + 1
+            (0.25+num_profs-1) * effect + 1
         )
     )
+    return math.max(1, baseprof - delta)
 end
 
 function ProfNumberByName(profname)

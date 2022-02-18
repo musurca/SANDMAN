@@ -173,6 +173,9 @@ function Sandman_Update(interval)
                         unit_boltered[k] = 0
                     end
 
+                    -- TODO: if plane has been set to maintenance mode,
+                    -- move pilots into the available reserves
+                        
                     -- check for replacement
                     local sidenum = SideNumberByName(unit.side)
                     local rthresh = RESERVE_REPLACE_THRESHOLD[sidenum]
