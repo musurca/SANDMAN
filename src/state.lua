@@ -396,7 +396,7 @@ function Sandman_Unit_TrySwapReserve(state, unit, index)
         local reserve_index = -1
         for k, id in ipairs(reserve_state.base_guids) do
             if id == unit.base.guid then
-                if tonumber(unit.DBID) == reserve_state.unit_types[k] then
+                if tonumber(unit.dbid) == reserve_state.unit_types[k] then
                     if reserve_state.effects[k] > max_effect then
                         reserve_index = k
                         max_effect = reserve_state.effects[k]

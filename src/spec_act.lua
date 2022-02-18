@@ -215,8 +215,17 @@ function Sandman_Display(selected_guids)
                         )
 
                         -- SKILL
+                        local unit_effect = unit_state.effects[k]
+                        local baseprof = unit_state.baseprofs[k]
+                        local realprof = ProfByEffectiveness(baseprof, unit_effect)
+                        local profname
+                        if baseprof == realprof then
+                            profname = ProfNameByNumber(baseprof)
+                        else
+                            profname = "<i>("..ProfNameByNumber(realprof)..")</i>"
+                        end
                         add_column(
-                            ProfNameByNumber(unit_state.baseprofs[k])
+                            profname
                         )
 
                         -- P.A.T.
@@ -236,14 +245,13 @@ function Sandman_Display(selected_guids)
                             pat_min_str = "0"..pat_min_str
                         end
                         add_column(
-                            pat_hr_str..pat_min_str
+                            pat_hr_str..":"..pat_min_str
                         )
 
                         -- EFFECTIVENESS
                         local rest_arrow = UNIT_RESTSTATES[
                             unit_state.reststates[k]
                         ]
-                        local unit_effect = unit_state.effects[k]
                         add_column(
                             "<center>"..Round(unit_effect*100).."% "..rest_arrow.."</center>"
                         )
@@ -294,7 +302,7 @@ function Sandman_DisplaySelected()
     end
 end
 
-function Sandman_ShowReservesSelected(selected_guids)
+function Sandman_ShowReservesAll(selected_guids)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
@@ -304,7 +312,7 @@ function Sandman_ShowReservesSelected(selected_guids)
         for n, unit in ipairs(side.units) do
             local u = ScenEdit_GetUnit({guid=unit.guid})
             if u.type=="Aircraft" then
-                dbid_to_name[tonumber(u.DBID)] = u.classname
+                dbid_to_name[tonumber(u.dbid)] = u.classname
             end
         end
     end
@@ -447,7 +455,7 @@ function Sandman_ShowReservesSelected()
         end
     end
     if #guids > 0 then
-        Sandman_ShowReservesSelected(guids)
+        Sandman_ShowReservesAll(guids)
     else
         Input_OK("No bases selected!")
     end
