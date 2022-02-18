@@ -51,8 +51,9 @@ This will produce compiled but unminified Lua code in `debug/sandman_debug.lua`.
 
 ### Version History
 v0.2.0 (????):
-* added: support for reserve crews
-* added: timezone by unit
+* added: reserve crews
+* added: reserve display and replacement thresholds
+* added: global timezones
 * added: multicrew model
 * changed: calling Enable/Disable() adds & removes special actions
 * fixed: implemented custom PRNG to replace math.random()

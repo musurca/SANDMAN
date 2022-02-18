@@ -13,6 +13,12 @@ function Sandman_Update(interval)
     local unit_micronapping = unit_state.is_micronapping
     local unit_boltered = unit_state.has_boltered
 
+    -- update reserve crews
+    for k=1, #sandman.reserve_state.base_guids do
+        Sandman_UpdateReserveCrew(sandman, k, interval)
+    end
+
+    -- update active units
     for k, id in ipairs(unit_state.guids) do
         local _, unit = pcall(
             ScenEdit_GetUnit,
@@ -96,8 +102,15 @@ function Sandman_Update(interval)
                     GetLocalTime(unit.longitude)
                 )
 
-                -- check if we've been caught nappin'
                 if unit.airbornetime_v > 0 then
+                    -- AIRBORNE
+                    -- if unit previously boltered, turn it around
+                    if unit_boltered[k] == 1 then
+                        unit:RTB(true)
+                        unit_boltered[k] = 0
+                    end
+
+                     -- check if we've been caught nappin'
                     local dice_roll = Random()
                     local nap_risk = MicroNapRisk(interval, cur_effect, circadian)
                     -- divide nap risk by number of crew members
@@ -116,56 +129,60 @@ function Sandman_Update(interval)
                             unit_micronapping[k] = 1
                         end
                     end
+
+                    -- Small risk of aircraft crashing on landing
+                    if unit.condition == "On final approach" or unit.condition == "In landing queue" then
+                        if unit.base then
+                            local crash_risk = CrashRisk(interval, cur_effect, unit.base)
+                            local dice_roll = Random()
+                            if dice_roll <= crash_risk then
+                                local preposition = "at"
+                                if unit.base.type == "Ship" then
+                                    preposition = "on"
+                                end
+                                local msg = unit.name.." crashed while attempting to land "..preposition.." "..unit.base.name.."."
+                                ScenEdit_SpecialMessage(
+                                    unit.side,
+                                    msg,
+                                    {
+                                        latitude=unit.latitude,
+                                        longitude=unit.longitude
+                                    }
+                                )
+                                ScenEdit_KillUnit({
+                                    guid=unit.guid
+                                })
+                            else
+                                -- a go-around/bolter is 100x more likely
+                                if Clamp(dice_roll*100, 0, 0.95) <= crash_risk then
+                                    unit:RTB(false)
+                                    unit_boltered[k] = 1
+                                end
+                            end
+                        end
+                    end
                 else
+                    -- ON THE GROUND
+                    -- reset micronapping/bolter states
                     if unit_micronapping[k] == 1 then
                         --nap stops
                         unit_set_nap(unit, false)
                         unit_micronapping[k] = 0
                     end
-                end
+                    if unit_boltered[k] == 1 then
+                        unit_boltered[k] = 0
+                    end
 
-                -- if unit previously boltered, turn it around
-                if unit_boltered[k] == 1 then
-                    unit:RTB(true)
-                    unit_boltered[k] = 0
-                end
-
-                -- Small risk of aircraft crashing on landing
-                if unit.condition == "On final approach" or unit.condition == "In landing queue" then
-                    if unit.base then
-                        local crash_risk = CrashRisk(interval, cur_effect, unit.base)
-                        local dice_roll = Random()
-                        if dice_roll <= crash_risk then
-                            local preposition = "at"
-                            if unit.base.type == "Ship" then
-                                preposition = "on"
-                            end
-                            local msg = unit.name.." crashed while attempting to land "..preposition.." "..unit.base.name.."."
-                            ScenEdit_SpecialMessage(
-                                unit.side,
-                                msg,
-                                {
-                                    latitude=unit.latitude,
-                                    longitude=unit.longitude
-                                }
-                            )
-                            ScenEdit_KillUnit({
-                                guid=unit.guid
-                            })
-                        else
-                            -- a go-around/bolter is 100x more likely
-                            if Clamp(dice_roll*100, 0, 0.95) <= crash_risk then
-                                unit:RTB(false)
-                                unit_boltered[k] = 1
-                            end
-                        end
+                    -- check for replacement
+                    local sidenum = SideNumberByName(unit.side)
+                    local rthresh = RESERVE_REPLACE_THRESHOLD[sidenum]
+                    if cur_effect < rthresh then
+                        Sandman_Unit_TrySwapReserve(sandman, unit, k)
                     end
                 end
             end
         end
     end
-
-    -- TODO: update reserve crews
 
     Sandman_StoreState(sandman)
 end

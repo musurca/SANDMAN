@@ -42,42 +42,6 @@ function Sandman_HasIKE()
     return ScenEdit_GetKeyValue("__SCEN_SETUPPHASE") ~= ""
 end
 
--- add the fatigue management special actions
-function Sandman_AddSpecialActions()
-    ForEachDo(VP_GetSides(), function(side)
-        local sname = side.name
-        SpecialAction_Create(
-            "Fatigue Avoidance Scheduling Tool (All Pilots)",
-            "Shows the current effectiveness state for all of your pilots.",
-            sname,
-            "Sandman_Display()"
-        )
-
-        SpecialAction_Create(
-            "Fatigue Avoidance Scheduling Tool (Selected Pilots)",
-            "Shows the current effectiveness state for the currently selected aircraft.",
-            sname,
-            "Sandman_DisplaySelected()"
-        )
-    end)
-end
-
--- remove the fatigue management special actions
-function Sandman_RemoveSpecialActions()
-    ForEachDo(VP_GetSides(), function(side)
-        local sname = side.name
-        SpecialAction_Delete(
-            "Fatigue Avoidance Scheduling Tool (All Pilots)", 
-            sname
-        )
-
-        SpecialAction_Delete(
-            "Fatigue Avoidance Scheduling Tool (Selected Pilots)",
-            sname
-        )
-    end)
-end
-
 --reset tracked aircraft to their base proficiency
 function Sandman_Clear()
     if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then

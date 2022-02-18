@@ -17,7 +17,7 @@ function Sandman_IsEnabled()
 end
 
 -- For scenario authors to set a unit's sleep deficit manually
-function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs)
+function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs, longitude)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
@@ -34,8 +34,15 @@ function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs)
                 }
             )
             if unit then
+                local cindex = unit_state.crewindices[k]
+                local circadian_hr
+                if longitude then
+                    circadian_hr = GetLocalTimeDifference(longitude)
+                else
+                    circadian_hr = crew_state.circadian_hr[cindex]
+                end
                 local circadian = CustomCircadianTerm(
-                    GetLocalTime(unit.longitude)
+                    (GetLocalTime(unit.longitude) + circadian_hr) % 24
                 )
 
                 local crewnum = unit_state.crewsizes[k]
@@ -131,6 +138,7 @@ function Sandman_GetMicroNapRisk(guid)
     Sandman_CheckInit()
 
     local unit_state = Sandman_GetUnitState()
+    local crew_state = Sandman_GetCrewState()
 
     for k, id in ipairs(unit_state.guids) do
         if id == guid then
@@ -141,14 +149,15 @@ function Sandman_GetMicroNapRisk(guid)
                 }
             )
             if u then
+                local cindex = unit_state.crewindices[k]
+                local circadian_hr = crew_state.circadian_hr[cindex]
+                local circadian = CustomCircadianTerm(
+                    (GetLocalTime(u.longitude) + circadian_hr) % 24
+                )
                 return MicroNapRisk(
                     3600,
                     unit_state.effects[k],
-                    CustomCircadianTerm(
-                        GetLocalTime(
-                            u.longitude
-                        )
-                    )
+                    circadian
                 )
             else
                 break

@@ -133,11 +133,26 @@ function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interva
     local crewindex = unit_state.crewindices[index]
 
     local crew_state = state.crew_state
-    local circadian_hr = crew_state.circadian_hr
-    --TODO: handle crew member's local time
-    --TODO: update circadian hr
+    local circadian_hr = crew_state.circadian_hr[crewindex]
+
+    -- circadian phase shift
+    local total_time = active_interval + resting_interval
+    local time_diff = GetLocalTimeDifference(unit.longitude)
+    local tz_dff = (time_diff - circadian_hr + 12) % 24 - 12
+    local phase_shift = 0
+    -- TODO: determine speed of phase transition by amt of light
+    if tz_dff > 0 then
+        -- east bound phase transition
+        -- 1.5d / hour
+        phase_shift = math.min(total_time/129600, tz_dff)
+    elseif tz_dff < 0 then
+        -- west bound phase transition
+        -- 1d / hour
+        phase_shift = math.max(-total_time/86400, tz_dff)
+    end
+    circadian_hr = circadian_hr + phase_shift
     local circadian = CustomCircadianTerm(
-        GetLocalTime(unit.longitude)
+        (GetLocalTime(unit.longitude) + circadian_hr) % 24
     )
 
     -- update crew first
@@ -163,6 +178,7 @@ function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interva
         local effect = EffectivenessScore(sleepres, circadian)
         crew_state.effects[ci] = effect
         effect_avg = effect_avg + effect
+        crew_state.circadian_hr[ci] = circadian_hr
     end
 
     unit_state.reststates[index] = RestStateByCondition(
@@ -247,6 +263,7 @@ function Sandman_NewReserveState()
     return {
         unit_types = {},
         base_guids = {},
+        baseprofs = {},
         crewsizes = {},
         crewindices = {},
         effects = {}
@@ -255,8 +272,9 @@ end
 
 function Sandman_GetReserveState()
     return {
-        unit_types = GetArrayString("SANDMAN_RESERVE_TYPES"),
+        unit_types = GetArrayNumber("SANDMAN_RESERVE_TYPES"),
         base_guids = GetArrayNumber("SANDMAN_RESERVE_BASEGUIDS"),
+        baseprofs = GetArrayNumber("SANDMAN_RESERVE_BASEPROFS"),
         crewsizes = GetArrayNumber("SANDMAN_RESERVE_CREWSIZES"),
         crewindices = GetArrayNumber("SANDMAN_RESERVE_CREWINDICES"),
         effects = GetArrayNumber("SANDMAN_RESERVE_EFFECTS")
@@ -264,14 +282,15 @@ function Sandman_GetReserveState()
 end
 
 function Sandman_StoreReserveState(reserve_state)
-    StoreArrayString("SANDMAN_RESERVE_TYPES", reserve_state.unit_types)
+    StoreArrayNumber("SANDMAN_RESERVE_TYPES", reserve_state.unit_types)
     StoreArrayNumber("SANDMAN_RESERVE_BASEGUIDS", reserve_state.base_guids)
+    StoreArrayNumber("SANDMAN_RESERVE_BASEPROFS", reserve_state.baseprofs)
     StoreArrayNumber("SANDMAN_RESERVE_CREWSIZES", reserve_state.crewsizes)
     StoreArrayNumber("SANDMAN_RESERVE_CREWINDICES", reserve_state.crewindices)
     StoreArrayNumber("SANDMAN_RESERVE_EFFECTS", reserve_state.effects)
 end
 
-function Sandman_AddReserveCrew(reserve_state, unit_type, base, crew_state, num, args)
+function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, crew_state, num, args)
     table.insert(
         reserve_state.unit_types,
         unit_type
@@ -279,6 +298,10 @@ function Sandman_AddReserveCrew(reserve_state, unit_type, base, crew_state, num,
     table.insert(
         reserve_state.base_guids,
         base.guid
+    )
+    table.insert(
+        reserve_state.baseprofs,
+        ProfNumberByName(proficiency)
     )
     table.insert(
         reserve_state.crewsizes,
@@ -293,4 +316,126 @@ function Sandman_AddReserveCrew(reserve_state, unit_type, base, crew_state, num,
         reserve_state.effects,
         Sandman_GetCrewEffectiveness(crew_state, crewindex, num)
     )
+end
+
+function Sandman_UpdateReserveCrew(state, index, resting_interval)
+    local crew_state = state.crew_state
+    local reserve_state = state.reserve_state
+
+    local crewnum = reserve_state.crewsizes[index]
+    local crewindex = reserve_state.crewindices[index]
+
+    local circadian_hr = crew_state.circadian_hr[crewindex]
+    local base_guid = reserve_state.base_guids[index]
+    local _, base = pcall(
+        ScenEdit_GetUnit,
+        {
+            guid=base_guid
+        }
+    )
+    if base == nil then
+        return
+    end
+
+    -- circadian phase shift
+    local total_time = resting_interval
+    local time_diff = GetLocalTimeDifference(base.longitude)
+    local tz_dff = (time_diff - circadian_hr + 12) % 24 - 12
+    local phase_shift = 0
+    -- TODO: determine speed of phase transition by amt of light
+    if tz_dff > 0 then
+        -- east bound phase transition
+        -- 1.5d / hour
+        phase_shift = math.min(total_time/129600, tz_dff)
+    elseif tz_dff < 0 then
+        -- west bound phase transition
+        -- 1d / hour
+        phase_shift = math.max(-total_time/86400, tz_dff)
+    end
+    circadian_hr = circadian_hr + phase_shift
+    local circadian = CustomCircadianTerm(
+        (GetLocalTime(base.longitude) + circadian_hr) % 24
+    )
+
+    -- update crew first
+    local effect_avg = 0
+    for i=1, crewnum do
+        local ci = crewindex + i - 1
+        local sleepres = crew_state.sleep_units[ci]
+        local sleep_units_gained = 0
+        if resting_interval > 0 then
+           sleep_units_gained = RestorativeSleep(
+               resting_interval,
+               sleepres,
+               circadian
+            )
+        end
+        sleepres = Clamp(
+            sleepres + sleep_units_gained,
+            0,
+            SLEEP_RESERVOIR_CAPACITY
+        )
+        crew_state.sleep_units[ci] = sleepres
+        local effect = EffectivenessScore(sleepres, circadian)
+        crew_state.effects[ci] = effect
+        effect_avg = effect_avg + effect
+        crew_state.circadian_hr[ci] = circadian_hr
+    end
+
+    effect_avg = effect_avg / crewnum
+    reserve_state.effects[index] = effect_avg
+end
+
+function Sandman_Unit_TrySwapReserve(state, unit, index)
+    local unit_state = state.unit_state
+    local crew_state = state.crew_state
+    local reserve_state = state.reserve_state
+
+    if unit.base then
+        local max_effect = unit_state.effects[index]
+        local reserve_index = -1
+        for k, id in ipairs(reserve_state.base_guids) do
+            if id == unit.base.guid then
+                if tonumber(unit.DBID) == reserve_state.unit_types[k] then
+                    if reserve_state.effects[k] > max_effect then
+                        reserve_index = k
+                        max_effect = reserve_state.effects[k]
+                    end
+                end
+            end
+        end
+
+        -- Found a valid reserve crew for swap
+        if reserve_index ~= -1 then
+            -- swap crew indices
+            local oldcrewindex = unit_state.crewindices[index]
+            unit_state.crewindices[index] = reserve_state.crewindices[reserve_index]
+            reserve_state.crewindices[reserve_index] = oldcrewindex
+
+            -- set new effectiveness level
+            unit_state.effects[index] = Sandman_GetCrewEffectiveness(
+                crew_state,
+                unit_state.crewindices[index],
+                unit_state.crewsizes[index]
+            )
+
+            local oldprof = unit_state.baseprofs[index]
+            unit_state.baseprofs[index] = reserve_state.baseprofs[reserve_index]
+            reserve_state.baseprofs[reserve_index] = oldprof
+            local effectiveprof = ProfByEffectiveness(
+                unit_state.baseprofs[index],
+                unit_state.effects[index]
+            )
+            local newprof = ProfNameByNumber(effectiveprof)
+            if unit.proficiency ~= newprof then
+                pcall(
+                    ScenEdit_SetUnit,
+                    {
+                        guid=unit.guid,
+                        proficiency=newprof
+                    }
+                )
+            end
+        end
+    end
 end

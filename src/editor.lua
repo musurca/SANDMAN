@@ -10,6 +10,15 @@ Triggers, Conditions, and Actions.
 ----------------------------------------------
 ]]--
 
+function SideNumberByName(side_name)
+    for k, side in ipairs(VP_GetSides()) do
+        if side.name == side_name then
+            return k
+        end
+    end
+    return 1
+end
+
 function Side_Exists(side_name)
     for k, side in ipairs(VP_GetSides()) do
         if side.name == side_name then
