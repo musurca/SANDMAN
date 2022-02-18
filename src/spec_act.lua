@@ -231,9 +231,7 @@ function Sandman_Display(selected_guids)
                         -- P.A.T.
                         local cindex = unit_state.crewindices[k]
                         local circadian_hr = crew_state.circadian_hr[cindex]
-                        local time_diff = GetLocalTimeDifference(unit.longitude)
-                        local tz_dff = (time_diff - circadian_hr + 12) % 24 - 12
-                        local pat = (18 + tz_dff) % 24
+                        local pat = (18 - circadian_hr) % 24
                         local pat_hr = math.floor(pat)
                         local pat_min = Round((pat - pat_hr)*60)
                         local pat_hr_str = tostring(pat_hr)
@@ -245,7 +243,7 @@ function Sandman_Display(selected_guids)
                             pat_min_str = "0"..pat_min_str
                         end
                         add_column(
-                            pat_hr_str..":"..pat_min_str
+                            pat_hr_str..":"..pat_min_str.."Z"
                         )
 
                         -- EFFECTIVENESS

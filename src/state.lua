@@ -152,7 +152,7 @@ function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interva
     end
     circadian_hr = circadian_hr + phase_shift
     local circadian = CustomCircadianTerm(
-        (GetLocalTime(unit.longitude) + circadian_hr) % 24
+        (GetZuluTime() - circadian_hr) % 24
     )
 
     -- update crew first
@@ -354,7 +354,7 @@ function Sandman_UpdateReserveCrew(state, index, resting_interval)
     end
     circadian_hr = circadian_hr + phase_shift
     local circadian = CustomCircadianTerm(
-        (GetLocalTime(base.longitude) + circadian_hr) % 24
+        (GetZuluTime() - circadian_hr) % 24
     )
 
     -- update crew first

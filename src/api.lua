@@ -42,7 +42,7 @@ function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs, longitude)
                     circadian_hr = crew_state.circadian_hr[cindex]
                 end
                 local circadian = CustomCircadianTerm(
-                    (GetLocalTime(unit.longitude) + circadian_hr) % 24
+                    (GetZuluTime() - circadian_hr) % 24
                 )
 
                 local crewnum = unit_state.crewsizes[k]
@@ -152,7 +152,7 @@ function Sandman_GetMicroNapRisk(guid)
                 local cindex = unit_state.crewindices[k]
                 local circadian_hr = crew_state.circadian_hr[cindex]
                 local circadian = CustomCircadianTerm(
-                    (GetLocalTime(u.longitude) + circadian_hr) % 24
+                    (GetZuluTime() - circadian_hr) % 24
                 )
                 return MicroNapRisk(
                     3600,
