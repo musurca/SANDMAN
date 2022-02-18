@@ -10,8 +10,11 @@ function Sandman_Update(interval)
 
     local sandman = Sandman_GetState()
     local unit_state = sandman.unit_state
+    local crew_state = sandman.crew_state
     local unit_micronapping = unit_state.is_micronapping
     local unit_boltered = unit_state.has_boltered
+
+    local zulutime = GetZuluTime()
 
     -- update reserve crews
     for k=1, #sandman.reserve_state.base_guids do
@@ -98,8 +101,10 @@ function Sandman_Update(interval)
                 end
 
                 local cur_effect = unit_state.effects[k]
+                local crewindex = unit_state.crewindices[k]
+                local circadian_hr = crew_state.circadian_hr[crewindex]
                 local circadian = CustomCircadianTerm(
-                    GetLocalTime(unit.longitude)
+                    (zulutime - circadian_hr) % 24
                 )
 
                 if unit.airbornetime_v > 0 then
