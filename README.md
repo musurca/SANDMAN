@@ -55,6 +55,7 @@ v0.2.0 (????):
 * added: reserve display and replacement thresholds
 * added: global timezones
 * added: multicrew model
+* changed: FAST shows peak awareness time for pilot
 * changed: calling Enable/Disable() adds & removes special actions
 * fixed: implemented custom PRNG to replace math.random()
 
