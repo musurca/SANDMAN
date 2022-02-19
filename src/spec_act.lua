@@ -321,7 +321,7 @@ function Sandman_ShowReservesAll(selected_guids)
     Sandman_CheckInit()
 
     -- formatting for our old-skool HTML tables
-    local table_names = { "SKILL", "EFFECTIVENESS" }
+    local table_names = { "SKILL", "P.A.T.", "EFFECTIVENESS" }
     local table_header = "<table cellSpacing=1 cols="..#table_names.." cellPadding=1 width=\"95%\" border=2><tbody>"
     table_header = table_header.."<tr>"
     for k, tname in ipairs(table_names) do
@@ -335,6 +335,7 @@ function Sandman_ShowReservesAll(selected_guids)
     if #reserve_state.base_guids == 0 then
         Input_OK("No reserves available!")
     end
+    local crew_state = Sandman_GetCrewState()
 
     local function start_table()
         msg_body = msg_body..table_header
@@ -422,9 +423,40 @@ function Sandman_ShowReservesAll(selected_guids)
                 for n, k in ipairs(unitlist) do
                     -- display row for unit
                     start_row()
+
+                    -- SKILL
+                    local unit_effect = reserve_state.effects[k]
+                    local baseprof = reserve_state.baseprofs[k]
+                    local realprof = ProfByEffectiveness(baseprof, unit_effect)
+                    local profname
+                    if baseprof == realprof then
+                        profname = ProfNameByNumber(baseprof)
+                    else
+                        profname = "<i>("..ProfNameByNumber(realprof)..")</i>"
+                    end
                     add_column(
-                        ProfNameByNumber(reserve_state.baseprofs[k])
+                        profname
                     )
+
+                    -- P.A.T.
+                    local cindex = reserve_state.crewindices[k]
+                    local circadian_hr = crew_state.circadian_hr[cindex]
+                    local pat = (18 - circadian_hr) % 24
+                    local pat_hr = math.floor(pat)
+                    local pat_min = Round((pat - pat_hr)*60)
+                    local pat_hr_str = tostring(pat_hr)
+                    local pat_min_str = tostring(pat_min)
+                    if string.len(pat_hr_str) == 1 then
+                        pat_hr_str = "0"..pat_hr_str
+                    end
+                    if string.len(pat_min_str) == 1 then
+                        pat_min_str = "0"..pat_min_str
+                    end
+                    add_column(
+                        pat_hr_str..":"..pat_min_str.."Z"
+                    )
+
+                    -- EFFECTIVENESS
                     local rest_arrow = UNIT_RESTSTATES[
                         STATE_REST_HEAVY
                     ]
