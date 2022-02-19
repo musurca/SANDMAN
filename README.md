@@ -59,7 +59,10 @@ v0.2.0 (????):
 * changed: FAST shows actual proficiency based on effectiveness
 * changed: proficiency drop now an absolute delta
 * changed: calling Enable/Disable() adds & removes special actions
+* changed: update called on prime number intervals
+* changed: circadian term cached
 * fixed: implemented custom PRNG to replace math.random()
+* fixed: array table storage
 
 v0.1.1 (2/10/2022):
 * added: API functions for scenario authors

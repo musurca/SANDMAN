@@ -68,10 +68,25 @@ function RandomSleepDeficit(min_hrs, max_hrs)
     return SleepDeficit(hrs)
 end
 
+__CIRCADIAN_CACHE_SIZE__ = 20
+__CIRCADIAN_CACHE__ = {}
+function BuildCircadianCache()
+    local t
+    for i=1,24*__CIRCADIAN_CACHE_SIZE__ do
+        t = i/__CIRCADIAN_CACHE_SIZE__
+        __CIRCADIAN_CACHE__[i] = math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
+    end
+end
+
 -- SAFTE model of effect of circadian rhythm
 -- t = local time
 function CustomCircadianTerm(t)
-    return math.cos(2*math.pi*(t-18)/24) + 0.5*math.cos(4*math.pi*(t-21)/24)
+    local index = tonumber(
+        math.floor(
+            (t % 24) * __CIRCADIAN_CACHE_SIZE__
+        )
+    )
+    return __CIRCADIAN_CACHE__[index+1]
 end
 
 -- SAFTE model effectiveness score

@@ -1,3 +1,17 @@
+__UPDATE_INTERVALS__ = {61, 47, 73, 53, 59, 67, 71}
+__CUR_UPDATE_INTERVAL__ = 0
+function Sandman_CreateNextUpdate()
+    __CUR_UPDATE_INTERVAL__ = (__CUR_UPDATE_INTERVAL__ + 1) % #__UPDATE_INTERVALS__
+    local next_update_index = 1 + __CUR_UPDATE_INTERVAL__
+    local next_interval = __UPDATE_INTERVALS__[next_update_index]-1
+
+    local next_update_evt = ExecuteAt(
+        ScenEdit_CurrentTime() + next_interval,
+        "Sandman_Update("..tostring(next_interval)..")"
+    )
+    StoreString("SANDMAN_NEXT_UPDATE_EVT", next_update_evt)
+end
+
 -- interval in seconds
 function Sandman_Update(interval)
     -- quit if disabled
@@ -11,6 +25,7 @@ function Sandman_Update(interval)
     local sandman = Sandman_GetState()
     local unit_state = sandman.unit_state
     local crew_state = sandman.crew_state
+    local reserve_state = sandman.reserve_state
     local unit_micronapping = unit_state.is_micronapping
     local unit_boltered = unit_state.has_boltered
 
@@ -18,7 +33,12 @@ function Sandman_Update(interval)
 
     -- update reserve crews
     for k=1, #sandman.reserve_state.base_guids do
-        Sandman_UpdateReserveCrew(sandman, k, interval)
+        Sandman_UpdateReserveCrew(
+            crew_state,
+            reserve_state,
+            k,
+            interval
+        )
     end
 
     -- update active units
@@ -104,7 +124,7 @@ function Sandman_Update(interval)
                 local crewindex = unit_state.crewindices[k]
                 local circadian_hr = crew_state.circadian_hr[crewindex]
                 local circadian = CustomCircadianTerm(
-                    (zulutime - circadian_hr) % 24
+                    zulutime - circadian_hr
                 )
 
                 if unit.airbornetime_v > 0 then
@@ -193,4 +213,7 @@ function Sandman_Update(interval)
     end
 
     Sandman_StoreState(sandman)
+
+    -- set up next update
+    Sandman_CreateNextUpdate()
 end

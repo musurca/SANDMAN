@@ -16,6 +16,70 @@ function Sandman_IsEnabled()
     return GetBoolean("SANDMAN_ENABLED")
 end
 
+function Sandman_ClassByDBID(dbid)
+    local classname = SANDMAN_DBID_TO_CLASS[tostring(dbid)]
+    if classname ~= nil then
+        return classname
+    end
+    return "Unknown"
+end
+
+function Sandman_CrewByDBID(dbid)
+    local crewnum = tonumber(
+        SANDMAN_DBID_TO_CREW[tostring(dbid)]
+    )
+    if crewnum ~= nil then
+        return crewnum
+    end
+    return 1
+end
+
+-- For scenario authors to manually add reserves
+function Sandman_AddReserves(args)
+    -- initialize the unit tracker if it hasn't already been
+    Sandman_CheckInit()
+
+    local sandman = Sandman_GetState()
+
+    local base_guid = args.guid
+    local _, base = pcall(
+        ScenEdit_GetUnit,
+        {
+            guid=base_guid
+        }
+    )
+
+    if base == nil then
+        print("no base!")
+        return
+    end
+
+    local dbid = args.dbid
+    local proficiency = args.proficiency
+    local num_reserves = args.num
+
+    local min_hrs = args.min_hoursawake
+    local max_hrs = args.max_hoursawake
+    local blongitude = base.longitude
+
+    for i=1,num_reserves do
+        Sandman_AddReserveCrew(
+            sandman.reserve_state,
+            dbid,
+            base,
+            proficiency,
+            sandman.crew_state,
+            {
+                min_hoursawake=min_hrs,
+                max_hoursawake=max_hrs,
+                longitude=blongitude
+            }
+        )
+    end
+
+    Sandman_StoreState(sandman)
+end
+
 -- For scenario authors to set a unit's sleep deficit manually
 function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs, longitude)
     -- initialize the unit tracker if it hasn't already been
@@ -42,7 +106,7 @@ function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs, longitude)
                     circadian_hr = crew_state.circadian_hr[cindex]
                 end
                 local circadian = CustomCircadianTerm(
-                    (GetZuluTime() - circadian_hr) % 24
+                    GetZuluTime() - circadian_hr
                 )
 
                 local crewnum = unit_state.crewsizes[k]
@@ -152,7 +216,7 @@ function Sandman_GetMicroNapRisk(guid)
                 local cindex = unit_state.crewindices[k]
                 local circadian_hr = crew_state.circadian_hr[cindex]
                 local circadian = CustomCircadianTerm(
-                    (GetZuluTime() - circadian_hr) % 24
+                    GetZuluTime() - circadian_hr
                 )
                 return MicroNapRisk(
                     3600,

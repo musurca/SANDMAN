@@ -22,6 +22,12 @@ function Sandman_RefreshSettings()
     MAX_HOURS_AWAKE = GetNumber("SANDMAN_DEF_MAX_HRS")
 
     RESERVE_REPLACE_THRESHOLD = GetArrayNumber("SANDMAN_DEF_RESERVE_THRESH")
+
+    SANDMAN_DBID_TO_CLASS = GetDictionary("SANDMAN_DBID_CLASSNAME")
+    SANDMAN_DBID_TO_CREW = GetDictionary("SANDMAN_DBID_CREWSIZE")
+
+    -- build the cache of circadian values
+    BuildCircadianCache()
 end
 
 function Sandman_UseDefaults()
@@ -76,6 +82,3 @@ function Sandman_InputDefaults()
     StoreNumber("SANDMAN_DEF_MIN_HRS", MIN_HOURS_AWAKE)
     StoreNumber("SANDMAN_DEF_MAX_HRS", MAX_HOURS_AWAKE)
 end
-
--- Refresh globals anew every time the scenario loads
-Sandman_RefreshSettings()

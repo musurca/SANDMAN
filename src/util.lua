@@ -248,11 +248,13 @@ Stores an array of strings persistently.
 ]]--
 function StoreArrayString(id, arr)
     local blob = ""
-    for i=1,#arr-1 do
+    for i=1,#arr do
         blob = blob..tostring(arr[i]).."∧"
     end
-    blob = blob..tostring(arr[#arr])
-    StoreString(id, blob)
+    StoreString(
+        id,
+        string.sub(blob, 1, -4)
+    )
 end
 
 --[[
@@ -268,14 +270,7 @@ end
 --[[
 Stores an array of strings persistently. 
 ]]--
-function StoreArrayNumber(id, arr)
-    local blob = ""
-    for i=1,#arr-1 do
-        blob = blob..tostring(arr[i]).."∧"
-    end
-    blob = blob..tostring(arr[#arr])
-    StoreString(id, blob)
-end
+StoreArrayNumber = StoreArrayString
 
 --[[
 Retrieves a stored array of strings. 
@@ -289,4 +284,47 @@ function GetArrayNumber(id)
         arr[i] = tonumber(arr[i])
     end
     return arr
+end
+
+--[[
+Stores an dictionary persistently. 
+]]--
+function StoreDictionary(id, dict)
+    local id_keys = id.."_KEYS"
+    local id_vals = id.."_VALUES"
+    local blob_keys = ""
+    local blob_vals = ""
+    for key, val in pairs(dict) do
+        blob_keys = blob_keys..tostring(key).."∧"
+        blob_vals = blob_vals..tostring(val).."∧"
+    end
+    StoreString(
+        id_keys,
+        string.sub(blob_keys, 1, -4)
+    )
+    StoreString(
+        id_vals,
+        string.sub(blob_vals, 1, -4)
+    )
+end
+
+--[[
+Retrieves a stored dictionary. 
+]]--
+function GetDictionary(id)
+    local id_keys = id.."_KEYS"
+    local id_vals = id.."_VALUES"
+    local key_array = String_Split(
+        GetString(id_keys),
+        "∧"
+    )
+    local value_array = String_Split(
+        GetString(id_vals),
+        "∧"
+    )
+    local dict = {}
+    for i=1, #value_array do
+        dict[ key_array[i] ] = value_array[i]
+    end
+    return dict
 end

@@ -375,25 +375,27 @@ function Sandman_ShowReservesAll(selected_guids)
         )
         local rtype = reserve_state.unit_types[k]
         local rtypename = dbid_to_name[rtype]
-        if base and was_selected(id) and base.side == pside and rtypename ~= nil then
-            units_selected = units_selected + 1
+        if base and was_selected(id) then
+            if base.side == pside and rtypename ~= nil then
+                units_selected = units_selected + 1
 
-            -- organize reserves by their base
-            local bname = base.name
-            local typelist_dict = base_dict[bname]
-            if typelist_dict == nil then
-                typelist_dict = {}
-                base_dict[bname] = typelist_dict
+                -- organize reserves by their base
+                local bname = base.name
+                local typelist_dict = base_dict[bname]
+                if typelist_dict == nil then
+                    typelist_dict = {}
+                    base_dict[bname] = typelist_dict
+                end
+
+                -- finally organize by their class
+                local unitlist = typelist_dict[rtypename]
+                if unitlist == nil then
+                    unitlist = {}
+                    typelist_dict[rtypename] = unitlist
+                end
+
+                table.insert(unitlist, k)
             end
-
-            -- finally organize by their class
-            local unitlist = typelist_dict[rtypename]
-            if unitlist == nil then
-                unitlist = {}
-                typelist_dict[rtypename] = unitlist
-            end
-
-            table.insert(unitlist, k)
         end
     end
 

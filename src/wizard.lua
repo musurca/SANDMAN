@@ -40,38 +40,6 @@ function Sandman_Wizard()
         )
     )
 
-    -- update tick every minute
-    local updateEvent = Event_Create(
-        "SANDMAN: Update Tick",
-        {
-            IsRepeatable=true,
-            IsShown=false
-        }
-    )
-    Event_AddTrigger(
-        updateEvent,
-        Trigger_Create(
-            "SANDMAN_Update_Tick",
-            {
-                type="RegularTime",
-                interval=4 --Every Minute
-            }
-        )
-    )
-    Event_AddAction(
-        updateEvent,
-        Action_Create(
-            "SANDMAN: Next Update",
-            {
-                type="LuaScript",
-                ScriptText="Sandman_Update(60)"
-               }
-        )
-    )
-
-    -- add special actions for the scheduling tool
-    Sandman_AddSpecialActions()
-
     -- set values for model
     local result = Input_YesNo("Thanks for using SANDMAN v"..SANDMAN_VERSION..", the fatigue modeling system for CMO.\n\nDo you want to use the suggested values for the fatigue model?")
     if result == true then
@@ -81,10 +49,13 @@ function Sandman_Wizard()
     end
 
     -- reset unit tracker
-    StoreBoolean("UNIT_TRACKER_INITIALIZED", false)
+    StoreBoolean("SANDMAN_INITIALIZED", false)
 
     -- enable SANDMAN
     Sandman_Enable()
     
     Input_OK("SANDMAN v"..SANDMAN_VERSION.." has been installed into this scenario!")
 end
+
+-- Refresh globals anew every time the scenario loads
+Sandman_RefreshSettings()

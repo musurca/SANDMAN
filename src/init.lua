@@ -1,4 +1,6 @@
 function Sandman_Init()
+    local dbid_to_name={}
+    local dbid_to_crew={}
     local tracked_guids = {}
     -- find all aircraft to track
     for k, side in ipairs(VP_GetSides()) do
@@ -6,6 +8,9 @@ function Sandman_Init()
             local u = ScenEdit_GetUnit({guid=unit.guid})
             if u.type=="Aircraft" then
                 table.insert(tracked_guids, unit.guid)
+                local dbid = tostring(u.dbid)
+                dbid_to_name[dbid] = u.classname
+                dbid_to_crew[dbid] = u.crew
             end
         end
     end
@@ -28,11 +33,16 @@ function Sandman_Init()
 
     Sandman_StoreState(sandman)
 
-    StoreBoolean("UNIT_TRACKER_INITIALIZED", true)
+    SANDMAN_DBID_TO_CLASS = dbid_to_name
+    SANDMAN_DBID_TO_CREW = dbid_to_crew
+    StoreDictionary("SANDMAN_DBID_CLASSNAME", dbid_to_name)
+    StoreDictionary("SANDMAN_DBID_CREWSIZE", dbid_to_crew)
+
+    StoreBoolean("SANDMAN_INITIALIZED", true)
 end
 
 function Sandman_CheckInit()
-    if GetBoolean("UNIT_TRACKER_INITIALIZED") == false then
+    if GetBoolean("SANDMAN_INITIALIZED") == false then
         Sandman_Init()
     end
 end
@@ -44,7 +54,7 @@ end
 
 --reset tracked aircraft to their base proficiency
 function Sandman_Clear()
-    if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then
+    if GetBoolean("SANDMAN_INITIALIZED") == true then
         local unit_state = Sandman_GetUnitState()
 
         for k, id in ipairs(unit_state.guids) do
@@ -68,11 +78,17 @@ function Sandman_Clear()
             end
         end
     end
+
+    local update_evt = GetString("SANDMAN_NEXT_UPDATE_EVT")
+    if update_evt ~= "" then
+        Event_Delete(update_evt, true)
+        StoreString("SANDMAN_NEXT_UPDATE_EVT", "")
+    end
 end
 
 --restore tracked aircraft to their fatigue-related proficiency
 function Sandman_Restore()
-    if GetBoolean("UNIT_TRACKER_INITIALIZED") == true then
+    if GetBoolean("SANDMAN_INITIALIZED") == true then
         local sandman = Sandman_GetState()
         local unit_state = sandman.unit_state
         
@@ -98,5 +114,10 @@ function Sandman_Restore()
                 end
             end
         end
+    end
+
+    local update_evt = GetString("SANDMAN_NEXT_UPDATE_EVT")
+    if update_evt == "" then
+        Sandman_CreateNextUpdate()
     end
 end

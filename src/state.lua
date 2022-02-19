@@ -152,7 +152,7 @@ function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interva
     end
     circadian_hr = circadian_hr + phase_shift
     local circadian = CustomCircadianTerm(
-        (GetZuluTime() - circadian_hr) % 24
+        GetZuluTime() - circadian_hr
     )
 
     -- update crew first
@@ -273,7 +273,7 @@ end
 function Sandman_GetReserveState()
     return {
         unit_types = GetArrayNumber("SANDMAN_RESERVE_TYPES"),
-        base_guids = GetArrayNumber("SANDMAN_RESERVE_BASEGUIDS"),
+        base_guids = GetArrayString("SANDMAN_RESERVE_BASEGUIDS"),
         baseprofs = GetArrayNumber("SANDMAN_RESERVE_BASEPROFS"),
         crewsizes = GetArrayNumber("SANDMAN_RESERVE_CREWSIZES"),
         crewindices = GetArrayNumber("SANDMAN_RESERVE_CREWINDICES"),
@@ -283,14 +283,14 @@ end
 
 function Sandman_StoreReserveState(reserve_state)
     StoreArrayNumber("SANDMAN_RESERVE_TYPES", reserve_state.unit_types)
-    StoreArrayNumber("SANDMAN_RESERVE_BASEGUIDS", reserve_state.base_guids)
+    StoreArrayString("SANDMAN_RESERVE_BASEGUIDS", reserve_state.base_guids)
     StoreArrayNumber("SANDMAN_RESERVE_BASEPROFS", reserve_state.baseprofs)
     StoreArrayNumber("SANDMAN_RESERVE_CREWSIZES", reserve_state.crewsizes)
     StoreArrayNumber("SANDMAN_RESERVE_CREWINDICES", reserve_state.crewindices)
     StoreArrayNumber("SANDMAN_RESERVE_EFFECTS", reserve_state.effects)
 end
 
-function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, crew_state, num, args)
+function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, crew_state, args)
     table.insert(
         reserve_state.unit_types,
         unit_type
@@ -303,6 +303,7 @@ function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, cre
         reserve_state.baseprofs,
         ProfNumberByName(proficiency)
     )
+    local num = Sandman_CrewByDBID(unit_type)
     table.insert(
         reserve_state.crewsizes,
         num
@@ -318,10 +319,7 @@ function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, cre
     )
 end
 
-function Sandman_UpdateReserveCrew(state, index, resting_interval)
-    local crew_state = state.crew_state
-    local reserve_state = state.reserve_state
-
+function Sandman_UpdateReserveCrew(crew_state, reserve_state, index, resting_interval)
     local crewnum = reserve_state.crewsizes[index]
     local crewindex = reserve_state.crewindices[index]
 
@@ -354,7 +352,7 @@ function Sandman_UpdateReserveCrew(state, index, resting_interval)
     end
     circadian_hr = circadian_hr + phase_shift
     local circadian = CustomCircadianTerm(
-        (GetZuluTime() - circadian_hr) % 24
+        GetZuluTime() - circadian_hr
     )
 
     -- update crew first
