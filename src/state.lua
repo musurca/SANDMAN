@@ -526,36 +526,55 @@ function Sandman_MoveToReserve(state, unit, index)
         return
     end
 
-    table.insert(
-        reserve_state.unit_types,
-        unit.dbid
-    )
-    table.insert(
-        reserve_state.base_guids,
-        unit.base.guid
-    )
-    table.insert(
-        reserve_state.baseprofs,
-        unit_state.baseprofs[index]
-    )
     local num = math.max(1, unit.crew)
-    table.insert(
-        reserve_state.crewsizes,
-        num
-    )
     local crewindex = unit_state.crewindices[index]
-    table.insert(
-        reserve_state.crewindices,
-        crewindex
-    )
-    table.insert(
-        reserve_state.effects,
-        Sandman_GetCrewEffectiveness(crew_state, crewindex, num)
-    )
-    table.insert(
-        reserve_state.is_active,
-        1
-    )
+    local effect = Sandman_GetCrewEffectiveness(crew_state, crewindex, num)
+
+    local slot_found = false
+    for i=1, #reserve_state.base_guids do
+        if reserve_state.is_active[i] == 0 then
+            reserve_state.unit_types[i] = unit.dbid
+            reserve_state.base_guids[i] = unit.base.guid
+            reserve_state.baseprofs[i] = unit_state.baseprofs[index]
+            reserve_state.crewsizes[i] = num
+            reserve_state.crewindices[i] = crewindex
+            reserve_state.effects[i] = effect
+            reserve_state.is_active[i] = 1
+            slot_found = true
+            break
+        end
+    end
+
+    if slot_found == false then
+        table.insert(
+            reserve_state.unit_types,
+            unit.dbid
+        )
+        table.insert(
+            reserve_state.base_guids,
+            unit.base.guid
+        )
+        table.insert(
+            reserve_state.baseprofs,
+            unit_state.baseprofs[index]
+        )
+        table.insert(
+            reserve_state.crewsizes,
+            num
+        )
+        table.insert(
+            reserve_state.crewindices,
+            crewindex
+        )
+        table.insert(
+            reserve_state.effects,
+            effect
+        )
+        table.insert(
+            reserve_state.is_active,
+            1
+        )
+    end
 
     unit_state.crewindices[index] = -1
     unit_state.effects[index] = 0
