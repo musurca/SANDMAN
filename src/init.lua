@@ -19,15 +19,22 @@ function Sandman_Init()
 
     for k, v in ipairs(tracked_guids) do
         local ac = ScenEdit_GetUnit({guid=v})
-        local uindex = Sandman_AddUnit(sandman, ac)
+        local isactive = true
+        if ac.loadoutdbid == 4 or ac.loadoutdbid == 3 then
+            -- under maintenance or reserve
+            isactive = false
+        end
+        local uindex = Sandman_AddUnit(sandman, ac, isactive)
 
-        -- set initial proficiency
-        local prof_name = Sandman_GetUnitProficiency(sandman, uindex)
-        if ac.proficiency ~= prof_name then
-            ScenEdit_SetUnit({
-                guid=v,
-                proficiency=prof_name
-            })
+        if isactive == true then
+            -- set initial proficiency
+            local prof_name = Sandman_GetUnitProficiency(sandman, uindex)
+            if ac.proficiency ~= prof_name then
+                ScenEdit_SetUnit({
+                    guid=v,
+                    proficiency=prof_name
+                })
+            end
         end
     end
 

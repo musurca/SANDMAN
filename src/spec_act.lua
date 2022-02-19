@@ -150,7 +150,7 @@ function Sandman_Display(selected_guids)
         )
         if unit and was_selected(id) then
             -- if on our side and not under maintenance
-            if unit.side == pside and unit.loadoutdbid ~= 4 then
+            if unit.side == pside and unit.loadoutdbid ~= 4 and unit.loadoutdbid ~= 3 and unit_state.is_active[k] == 1 then
                 units_selected = units_selected + 1
 
                 -- organize units by their status condition
@@ -290,7 +290,23 @@ function Sandman_DisplaySelected()
     local u = ScenEdit_SelectedUnits()
     if u then
         for k, unit in ipairs(u.units) do
-            table.insert(guids, unit.guid)
+            local _, u = pcall(
+                ScenEdit_GetUnit,
+                {
+                    guid=unit.guid
+                }
+            )
+            if u then
+                if u.type == "Aircraft" then
+                    table.insert(guids, unit.guid)
+                elseif u.embarkedUnits then
+                    if u.embarkedUnits.Aircraft then
+                        for n, ac_guid in ipairs(u.embarkedUnits.Aircraft) do
+                            table.insert(guids, ac_guid)
+                        end
+                    end
+                end
+            end
         end
     end
     if #guids > 0 then
@@ -304,17 +320,6 @@ function Sandman_ShowReservesAll(selected_guids)
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
-    --build DBID to type name table
-    local dbid_to_name = {}
-    for k, side in ipairs(VP_GetSides()) do
-        for n, unit in ipairs(side.units) do
-            local u = ScenEdit_GetUnit({guid=unit.guid})
-            if u.type=="Aircraft" then
-                dbid_to_name[tonumber(u.dbid)] = u.classname
-            end
-        end
-    end
-
     -- formatting for our old-skool HTML tables
     local table_names = { "SKILL", "EFFECTIVENESS" }
     local table_header = "<table cellSpacing=1 cols="..#table_names.." cellPadding=1 width=\"95%\" border=2><tbody>"
@@ -327,6 +332,9 @@ function Sandman_ShowReservesAll(selected_guids)
     local msg_body = ""
 
     local reserve_state = Sandman_GetReserveState()
+    if #reserve_state.base_guids == 0 then
+        Input_OK("No reserves available!")
+    end
 
     local function start_table()
         msg_body = msg_body..table_header
@@ -374,9 +382,9 @@ function Sandman_ShowReservesAll(selected_guids)
             }
         )
         local rtype = reserve_state.unit_types[k]
-        local rtypename = dbid_to_name[rtype]
+        local rtypename = Sandman_ClassByDBID(rtype)
         if base and was_selected(id) then
-            if base.side == pside and rtypename ~= nil then
+            if base.side == pside and rtypename ~= nil and reserve_state.is_active[k] == 1 then
                 units_selected = units_selected + 1
 
                 -- organize reserves by their base
@@ -400,7 +408,7 @@ function Sandman_ShowReservesAll(selected_guids)
     end
 
     if units_selected == 0 then
-        Input_OK("No valid bases selected!")
+        Input_OK("No available reserves in selected bases!")
         return
     end
 

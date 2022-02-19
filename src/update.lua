@@ -52,35 +52,36 @@ function Sandman_Update(interval)
 
         if unit then
             -- only update units not under maintenance
-            if unit.loadoutdbid ~= 4 then
-                local interval_resting = 0
-                if unit.condition_v == "Parked" then
-                    -- most effective rest
-                    interval_resting = interval*PARKED_PERCENTAGE
-                elseif string.find(unit.condition_v, "Readying") ~= nil then
-                    -- less effective rest
-                    interval_resting = interval*READYING_PERCENTAGE
+            if unit.loadoutdbid ~= 4 and unit.loadoutdbid ~= 3 then
+                if unit_state.is_active[k] == 0 then
+                    -- just reactivated, move in reserve crews
+                    Sandman_Unit_TrySwapReserve(sandman, unit, k)
+                    if unit_state.crewindices[k] == -1 then
+                        -- if no reserves available,
+                        -- add new crew at lowest skill
+                        unit_state.baseprofs[k] = 1
+                        local ucrew = math.max(1, unit.crew)
+                        local crewargs = {
+                            min_hoursawake = MIN_HOURS_AWAKE,
+                            max_hoursawake = MAX_HOURS_AWAKE,
+                            longitude = unit.longitude
+                        }
+                        local cindex = Sandman_AddCrew(
+                            crew_state,
+                            ucrew,
+                            crewargs
+                        )
+                        unit_state.crewindices[k] = cindex
+                        unit_state.is_active[k] = 1
+                    end
                 end
-                -- otherwise we're totally awake
-                local interval_active = interval - interval_resting
 
-                local new_prof_name = Sandman_UpdateUnit(
+                Sandman_UpdateUnit(
                     sandman,
                     k,
                     unit,
-                    interval_active,
-                    interval_resting
+                    interval
                 )
-                
-                if unit.proficiency ~= new_prof_name then
-                    pcall(
-                        ScenEdit_SetUnit,
-                        {
-                            guid=unit.guid,
-                            proficiency=new_prof_name
-                        }
-                    )
-                end
 
                 local function unit_set_nap(u, isnap)
                     local uguid = u.guid
@@ -135,23 +136,27 @@ function Sandman_Update(interval)
                         unit_boltered[k] = 0
                     end
 
-                     -- check if we've been caught nappin'
-                    local dice_roll = Random()
-                    local nap_risk = MicroNapRisk(interval, cur_effect, circadian)
-                    -- divide nap risk by number of crew members
-                    nap_risk = nap_risk / unit_state.crewsizes[k]
                     
-                    if unit_micronapping[k] == 1 then
-                        -- if already napping, twice as likely to continue
-                        if dice_roll*2 > nap_risk then
-                            unit_set_nap(unit, false)
-                            unit_micronapping[k] = 0
-                        end
-                    else
-                        if dice_roll <= nap_risk then
-                            -- pilot falls asleep
-                            unit_set_nap(unit, true)
-                            unit_micronapping[k] = 1
+                    local dice_roll
+                    if unit.crew > 0 then
+                        -- if not a UAV, check if we've been caught nappin'
+                        dice_roll = Random()
+                        local nap_risk = MicroNapRisk(interval, cur_effect, circadian)
+                        -- divide nap risk by number of crew members
+                        nap_risk = nap_risk / unit_state.crewsizes[k]
+                        
+                        if unit_micronapping[k] == 1 then
+                            -- if already napping, twice as likely to continue
+                            if dice_roll*2 > nap_risk then
+                                unit_set_nap(unit, false)
+                                unit_micronapping[k] = 0
+                            end
+                        else
+                            if dice_roll <= nap_risk then
+                                -- pilot falls asleep
+                                unit_set_nap(unit, true)
+                                unit_micronapping[k] = 1
+                            end
                         end
                     end
 
@@ -159,7 +164,7 @@ function Sandman_Update(interval)
                     if unit.condition == "On final approach" or unit.condition == "In landing queue" then
                         if unit.base then
                             local crash_risk = CrashRisk(interval, cur_effect, unit.base)
-                            local dice_roll = Random()
+                            dice_roll = Random()
                             if dice_roll <= crash_risk then
                                 local preposition = "at"
                                 if unit.base.type == "Ship" then
@@ -198,15 +203,17 @@ function Sandman_Update(interval)
                         unit_boltered[k] = 0
                     end
 
-                    -- TODO: if plane has been set to maintenance mode,
-                    -- move pilots into the available reserves
-                        
                     -- check for replacement
                     local sidenum = SideNumberByName(unit.side)
                     local rthresh = RESERVE_REPLACE_THRESHOLD[sidenum]
                     if cur_effect < rthresh then
                         Sandman_Unit_TrySwapReserve(sandman, unit, k)
                     end
+                end
+            else
+                if unit_state.is_active[k] == 1 then
+                    -- move crew to reserve
+                    Sandman_MoveToReserve(sandman, unit, k)
                 end
             end
         end

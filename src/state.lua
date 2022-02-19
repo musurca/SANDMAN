@@ -28,6 +28,7 @@ function Sandman_NewUnitState()
         effects = {},
         baseprofs = {},
         reststates = {},
+        is_active = {},
         has_boltered = {},
         is_micronapping = {}
     }
@@ -41,6 +42,7 @@ function Sandman_GetUnitState()
         effects = GetArrayNumber("SANDMAN_UNIT_EFFECTS"),
         baseprofs = GetArrayNumber("SANDMAN_UNIT_BASEPROFS"),
         reststates = GetArrayNumber("SANDMAN_UNIT_RESTSTATES"),
+        is_active = GetArrayNumber("SANDMAN_UNIT_ISACTIVE"),
         has_boltered = GetArrayNumber("SANDMAN_UNIT_BOLTER"),
         is_micronapping = GetArrayNumber("SANDMAN_UNIT_MICRONAP")
     }
@@ -53,11 +55,12 @@ function Sandman_StoreUnitState(unit_state)
     StoreArrayNumber("SANDMAN_UNIT_EFFECTS", unit_state.effects)
     StoreArrayNumber("SANDMAN_UNIT_BASEPROFS", unit_state.baseprofs)
     StoreArrayNumber("SANDMAN_UNIT_RESTSTATES", unit_state.reststates)
+    StoreArrayNumber("SANDMAN_UNIT_ISACTIVE", unit_state.is_active)
     StoreArrayNumber("SANDMAN_UNIT_BOLTER", unit_state.has_boltered)
     StoreArrayNumber("SANDMAN_UNIT_MICRONAP", unit_state.is_micronapping)
 end
 
-function Sandman_AddUnit(state, unit)
+function Sandman_AddUnit(state, unit, isactive)
     local unit_state = state.unit_state
     local crew_state = state.crew_state
 
@@ -69,14 +72,38 @@ function Sandman_AddUnit(state, unit)
         unit.guid
     )
 
-    --crew
+    -- crew
     local crewnum = math.max(1, unit.crew)
+    local crewindex = -1
+    local ueffects = 0
+    local activity_flag = 1
     local crew_args = {
         min_hoursawake = MIN_HOURS_AWAKE,
         max_hoursawake = MAX_HOURS_AWAKE,
         longitude = unit.longitude
     }
-    local crewindex = Sandman_AddCrew(crew_state, crewnum, crew_args)
+    if isactive == false then
+        activity_flag = 0
+        Sandman_AddReserveCrew(
+            state.reserve_state,
+            unit.dbid,
+            unit.base,
+            unit.proficiency,
+            crew_state,
+            crew_args
+        )
+    else
+        crewindex = Sandman_AddCrew(
+            crew_state,
+            crewnum,
+            crew_args
+        )
+        ueffects = Sandman_GetCrewEffectiveness(
+            crew_state,
+            crewindex,
+            crewnum
+        )
+    end
     table.insert(
         unit_state.crewindices,
         crewindex
@@ -87,7 +114,7 @@ function Sandman_AddUnit(state, unit)
     )
     table.insert(
         unit_state.effects,
-        Sandman_GetCrewEffectiveness(crew_state, crewindex, crewnum)
+        ueffects
     )
 
     --proficiency
@@ -106,6 +133,10 @@ function Sandman_AddUnit(state, unit)
     )
 
     -- starting states
+    table.insert(
+        unit_state.is_active,
+        activity_flag
+    )
     table.insert(
         unit_state.has_boltered,
         0
@@ -127,16 +158,27 @@ function Sandman_GetUnitProficiency(state, index)
     )
 end
 
-function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interval)
+function Sandman_UpdateUnit(state, index, unit, interval)
     local unit_state = state.unit_state
     local crewnum = unit_state.crewsizes[index]
     local crewindex = unit_state.crewindices[index]
+
+    -- Determine active and resting intervals
+    local resting_interval = 0
+    if unit.condition_v == "Parked" then
+        -- most effective rest
+        resting_interval = interval*PARKED_PERCENTAGE
+    elseif string.find(unit.condition_v, "Readying") ~= nil then
+        -- less effective rest
+        resting_interval = interval*READYING_PERCENTAGE
+    end
+    -- otherwise we're totally awake
+    local active_interval = interval - resting_interval
 
     local crew_state = state.crew_state
     local circadian_hr = crew_state.circadian_hr[crewindex]
 
     -- circadian phase shift
-    local total_time = active_interval + resting_interval
     local time_diff = GetLocalTimeDifference(unit.longitude)
     local tz_dff = (time_diff - circadian_hr + 12) % 24 - 12
     local phase_shift = 0
@@ -144,11 +186,11 @@ function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interva
     if tz_dff > 0 then
         -- east bound phase transition
         -- 1.5d / hour
-        phase_shift = math.min(total_time/129600, tz_dff)
+        phase_shift = math.min(interval/129600, tz_dff)
     elseif tz_dff < 0 then
         -- west bound phase transition
         -- 1d / hour
-        phase_shift = math.max(-total_time/86400, tz_dff)
+        phase_shift = math.max(-interval/86400, tz_dff)
     end
     circadian_hr = circadian_hr + phase_shift
     local circadian = CustomCircadianTerm(
@@ -191,9 +233,19 @@ function Sandman_UpdateUnit(state, index, unit, active_interval, resting_interva
 
     local baseprof = state.unit_state.baseprofs[index]
 
-    return ProfNameByNumber(
+    -- finally, update unit proficiency
+    local new_prof_name = ProfNameByNumber(
         ProfByEffectiveness(baseprof, effect_avg)
     )
+    if unit.proficiency ~= new_prof_name then
+        pcall(
+            ScenEdit_SetUnit,
+            {
+                guid=unit.guid,
+                proficiency=new_prof_name
+            }
+        )
+    end
 end
 
 function Sandman_NewCrewState()
@@ -219,8 +271,14 @@ function Sandman_StoreCrewState(crew_state)
 end
 
 function Sandman_AddCrew(crew_state, num, args)
-    local min_hoursawake = args.min_hoursawake
-    local max_hoursawake = args.max_hoursawake
+    local min_hoursawake = MIN_HOURS_AWAKE
+    if args.min_hoursawake then
+        min_hoursawake = args.min_hoursawake
+    end
+    local max_hoursawake = MAX_HOURS_AWAKE
+    if args.max_hoursawake then
+        max_hoursawake = args.max_hoursawake
+    end
     local start_hoursawake = 0
     if args.start_hoursawake then
         start_hoursawake = args.start_hoursawake
@@ -266,7 +324,8 @@ function Sandman_NewReserveState()
         baseprofs = {},
         crewsizes = {},
         crewindices = {},
-        effects = {}
+        effects = {},
+        is_active = {}
     }
 end
 
@@ -277,7 +336,8 @@ function Sandman_GetReserveState()
         baseprofs = GetArrayNumber("SANDMAN_RESERVE_BASEPROFS"),
         crewsizes = GetArrayNumber("SANDMAN_RESERVE_CREWSIZES"),
         crewindices = GetArrayNumber("SANDMAN_RESERVE_CREWINDICES"),
-        effects = GetArrayNumber("SANDMAN_RESERVE_EFFECTS")
+        effects = GetArrayNumber("SANDMAN_RESERVE_EFFECTS"),
+        is_active = GetArrayNumber("SANDMAN_RESERVE_ISACTIVE")
     }
 end
 
@@ -288,9 +348,12 @@ function Sandman_StoreReserveState(reserve_state)
     StoreArrayNumber("SANDMAN_RESERVE_CREWSIZES", reserve_state.crewsizes)
     StoreArrayNumber("SANDMAN_RESERVE_CREWINDICES", reserve_state.crewindices)
     StoreArrayNumber("SANDMAN_RESERVE_EFFECTS", reserve_state.effects)
+    StoreArrayNumber("SANDMAN_RESERVE_ISACTIVE", reserve_state.is_active)
 end
 
 function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, crew_state, args)
+    local return_index = #reserve_state.base_guids + 1
+
     table.insert(
         reserve_state.unit_types,
         unit_type
@@ -317,9 +380,19 @@ function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, cre
         reserve_state.effects,
         Sandman_GetCrewEffectiveness(crew_state, crewindex, num)
     )
+    table.insert(
+        reserve_state.is_active,
+        1
+    )
+
+    return return_index
 end
 
 function Sandman_UpdateReserveCrew(crew_state, reserve_state, index, resting_interval)
+    if reserve_state.is_active[index] == 0 then
+        return
+    end
+
     local crewnum = reserve_state.crewsizes[index]
     local crewindex = reserve_state.crewindices[index]
 
@@ -393,11 +466,13 @@ function Sandman_Unit_TrySwapReserve(state, unit, index)
         local max_effect = unit_state.effects[index]
         local reserve_index = -1
         for k, id in ipairs(reserve_state.base_guids) do
-            if id == unit.base.guid then
-                if tonumber(unit.dbid) == reserve_state.unit_types[k] then
-                    if reserve_state.effects[k] > max_effect then
-                        reserve_index = k
-                        max_effect = reserve_state.effects[k]
+            if reserve_state.is_active[k] == 1 then
+                if id == unit.base.guid then
+                    if tonumber(unit.dbid) == reserve_state.unit_types[k] then
+                        if reserve_state.effects[k] > max_effect then
+                            reserve_index = k
+                            max_effect = reserve_state.effects[k]
+                        end
                     end
                 end
             end
@@ -409,7 +484,11 @@ function Sandman_Unit_TrySwapReserve(state, unit, index)
             local oldcrewindex = unit_state.crewindices[index]
             unit_state.crewindices[index] = reserve_state.crewindices[reserve_index]
             reserve_state.crewindices[reserve_index] = oldcrewindex
-
+            if oldcrewindex == -1 then
+                reserve_state.is_active[reserve_index] = 0
+                unit_state.is_active[index] = 1
+            end
+           
             -- set new effectiveness level
             unit_state.effects[index] = Sandman_GetCrewEffectiveness(
                 crew_state,
@@ -436,4 +515,49 @@ function Sandman_Unit_TrySwapReserve(state, unit, index)
             end
         end
     end
+end
+
+function Sandman_MoveToReserve(state, unit, index)
+    local unit_state = state.unit_state
+    local reserve_state = state.reserve_state
+    local crew_state = state.crew_state
+
+    if unit_state.is_active[index] == 0 then
+        return
+    end
+
+    table.insert(
+        reserve_state.unit_types,
+        unit.dbid
+    )
+    table.insert(
+        reserve_state.base_guids,
+        unit.base.guid
+    )
+    table.insert(
+        reserve_state.baseprofs,
+        unit_state.baseprofs[index]
+    )
+    local num = math.max(1, unit.crew)
+    table.insert(
+        reserve_state.crewsizes,
+        num
+    )
+    local crewindex = unit_state.crewindices[index]
+    table.insert(
+        reserve_state.crewindices,
+        crewindex
+    )
+    table.insert(
+        reserve_state.effects,
+        Sandman_GetCrewEffectiveness(crew_state, crewindex, num)
+    )
+    table.insert(
+        reserve_state.is_active,
+        1
+    )
+
+    unit_state.crewindices[index] = -1
+    unit_state.effects[index] = 0
+    unit_state.is_active[index] = 0
 end

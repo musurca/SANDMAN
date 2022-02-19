@@ -55,12 +55,16 @@ v0.2.0 (????):
 * added: reserve display and replacement thresholds
 * added: global timezones
 * added: multicrew model
+* added: crews of planes under maintenance/reserve placed in reserve
 * changed: FAST shows peak awareness time for pilot
 * changed: FAST shows actual proficiency based on effectiveness
+* changed: FAST shows pilots in selected bases
 * changed: proficiency drop now an absolute delta
+* changed: UAVs will never micronap
 * changed: calling Enable/Disable() adds & removes special actions
 * changed: update called on prime number intervals
 * changed: circadian term cached
+* changed: API functions match CMO standard
 * fixed: implemented custom PRNG to replace math.random()
 * fixed: array table storage
 

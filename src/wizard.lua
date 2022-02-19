@@ -1,14 +1,17 @@
 SANDMAN_VERSION = "0.2.0"
 
 function Sandman_Wizard()
+    local result = Input_YesNo("Thanks for using SANDMAN v"..SANDMAN_VERSION..", the fatigue modeling system for CMO.\n\nHave you saved a backup of this scenario?")
+    if result == false then
+        Input_OK("Please save a backup first, then run this script again.")
+        return
+    end
+
     -- remove previous versions of SANDMAN
     if Event_Exists("SANDMAN: Scenario Loaded") then
         Event_Delete("SANDMAN: Scenario Loaded", true)
 
         Sandman_RemoveSpecialActions()
-    end
-    if Event_Exists("SANDMAN: Update Tick") then
-        Event_Delete("SANDMAN: Update Tick", true)
     end
     Sandman_Clear()
 
@@ -41,7 +44,7 @@ function Sandman_Wizard()
     )
 
     -- set values for model
-    local result = Input_YesNo("Thanks for using SANDMAN v"..SANDMAN_VERSION..", the fatigue modeling system for CMO.\n\nDo you want to use the suggested values for the fatigue model?")
+    result = Input_YesNo("Do you want to use the suggested values for the fatigue model?")
     if result == true then
         Sandman_UseDefaults()
     else

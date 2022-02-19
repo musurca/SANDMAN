@@ -50,7 +50,6 @@ function Sandman_AddReserves(args)
     )
 
     if base == nil then
-        print("no base!")
         return
     end
 
@@ -58,9 +57,14 @@ function Sandman_AddReserves(args)
     local proficiency = args.proficiency
     local num_reserves = args.num
 
-    local min_hrs = args.min_hoursawake
-    local max_hrs = args.max_hoursawake
-    local blongitude = base.longitude
+    local crew_args = {}
+    if args.min_hoursawake then
+        crew_args.min_hoursawake = args.min_hoursawake
+    end
+    if args.max_hoursawake then
+        crew_args.min_hoursawake = args.max_hoursawake
+    end
+    crew_args.longitude = base.longitude
 
     for i=1,num_reserves do
         Sandman_AddReserveCrew(
@@ -69,11 +73,7 @@ function Sandman_AddReserves(args)
             base,
             proficiency,
             sandman.crew_state,
-            {
-                min_hoursawake=min_hrs,
-                max_hoursawake=max_hrs,
-                longitude=blongitude
-            }
+            crew_args
         )
     end
 
@@ -81,7 +81,12 @@ function Sandman_AddReserves(args)
 end
 
 -- For scenario authors to set a unit's sleep deficit manually
-function Sandman_SetRandomSleepDeficit(guid, min_hrs, max_hrs, longitude)
+function Sandman_SetRandomSleepDeficit(args)
+    local guid = args.guid
+    local min_hrs = args.min_hoursawake
+    local max_hrs = args.max_hoursawake
+    local longitude = args.longitude
+
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
@@ -147,7 +152,8 @@ end
 
 -- For scenario authors to query unit effectiveness.
 -- Returns as fraction [0-1] representing percentage
-function Sandman_GetEffectiveness(guid)
+function Sandman_GetEffectiveness(args)
+    local guid = args.guid
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
@@ -163,7 +169,8 @@ end
 
 -- For scenario authors to query unit crash risk per hour.
 -- Returns as fraction [0-1] representing percentage
-function Sandman_GetCrashRisk(guid)
+function Sandman_GetCrashRisk(args)
+    local guid = args.guid
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
@@ -197,7 +204,8 @@ end
 
 -- For scenario authors to query unit micronap risk per hour.
 -- Returns as fraction [0-1] representing percentage
-function Sandman_GetMicroNapRisk(guid)
+function Sandman_GetMicroNapRisk(args)
+    local guid = args.guid
     -- initialize the unit tracker if it hasn't already been
     Sandman_CheckInit()
 
