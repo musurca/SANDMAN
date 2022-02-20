@@ -77,9 +77,8 @@ function Sandman_AddUnit(state, unit, isactive)
     local crewindex = -1
     local ueffects = 0
     local activity_flag = 1
+
     local crew_args = {
-        min_hoursawake = MIN_HOURS_AWAKE,
-        max_hoursawake = MAX_HOURS_AWAKE,
         longitude = unit.longitude
     }
     if isactive == false then
@@ -94,6 +93,7 @@ function Sandman_AddUnit(state, unit, isactive)
         )
     else
         crewindex = Sandman_AddCrew(
+            unit.side,
             crew_state,
             crewnum,
             crew_args
@@ -270,12 +270,12 @@ function Sandman_StoreCrewState(crew_state)
     StoreArrayNumber("SANDMAN_CREW_EFFECTS", crew_state.effects)
 end
 
-function Sandman_AddCrew(crew_state, num, args)
-    local min_hoursawake = MIN_HOURS_AWAKE
+function Sandman_AddCrew(sidename, crew_state, num, args)
+    local min_hoursawake = Sandman_Side_MinHoursAwake(sidename)
     if args.min_hoursawake then
         min_hoursawake = args.min_hoursawake
     end
-    local max_hoursawake = MAX_HOURS_AWAKE
+    local max_hoursawake = Sandman_Side_MaxHoursAwake(sidename)
     if args.max_hoursawake then
         max_hoursawake = args.max_hoursawake
     end
@@ -371,7 +371,12 @@ function Sandman_AddReserveCrew(reserve_state, unit_type, base, proficiency, cre
         reserve_state.crewsizes,
         num
     )
-    local crewindex = Sandman_AddCrew(crew_state, num, args)
+    local crewindex = Sandman_AddCrew(
+        base.side, 
+        crew_state, 
+        num, 
+        args
+    )
     table.insert(
         reserve_state.crewindices,
         crewindex

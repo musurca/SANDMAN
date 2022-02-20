@@ -62,11 +62,10 @@ function Sandman_Update(interval)
                         unit_state.baseprofs[k] = 1
                         local ucrew = math.max(1, unit.crew)
                         local crewargs = {
-                            min_hoursawake = MIN_HOURS_AWAKE,
-                            max_hoursawake = MAX_HOURS_AWAKE,
                             longitude = unit.longitude
                         }
                         local cindex = Sandman_AddCrew(
+                            unit.side,
                             crew_state,
                             ucrew,
                             crewargs
@@ -163,7 +162,12 @@ function Sandman_Update(interval)
                     -- Small risk of aircraft crashing on landing
                     if unit.condition == "On final approach" or unit.condition == "In landing queue" then
                         if unit.base then
-                            local crash_risk = CrashRisk(interval, cur_effect, unit.base)
+                            local crash_risk = CrashRisk(
+                                unit.side, 
+                                interval, 
+                                cur_effect, 
+                                unit.base
+                            )
                             dice_roll = Random()
                             if dice_roll <= crash_risk then
                                 local preposition = "at"

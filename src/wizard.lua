@@ -44,12 +44,7 @@ function Sandman_Wizard()
     )
 
     -- set values for model
-    result = Input_YesNo("Do you want to use the suggested values for the fatigue model?")
-    if result == true then
-        Sandman_UseDefaults()
-    else
-        Sandman_InputDefaults()
-    end
+    Sandman_InputSides()
 
     -- reset unit tracker
     StoreBoolean("SANDMAN_INITIALIZED", false)

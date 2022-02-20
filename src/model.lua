@@ -119,7 +119,8 @@ A speculative risk function given the following evidence from the literature...
 * landing at night on a stable ship is five times as risky
 * landing at night on an unstable ship is 10-20 times as risky
 ]]--
-function CrashRisk(interval, effect_score, base)
+function CrashRisk(sidename, interval, effect_score, base)
+    local crash_incidence = Sandman_Side_CrashIncidence(sidename)
     local timestep = interval/3600
     local effect_perc = (1-effect_score)*100
     local risk_factor = 1 + effect_perc*effect_perc/39.0625
@@ -144,7 +145,7 @@ function CrashRisk(interval, effect_score, base)
     end
 
     return Clamp(
-        risk_factor*CRASH_INCIDENCE*timestep,
+        risk_factor*crash_incidence*timestep,
         0,
         0.95
     )

@@ -187,6 +187,7 @@ function Sandman_GetCrashRisk(args)
             if u then
                 if u.base then
                     return CrashRisk(
+                        u.side,
                         3600,
                         unit_state.effects[k],
                         u.base

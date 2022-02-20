@@ -61,6 +61,9 @@ v0.2.0 (????):
 * changed: FAST shows pilots in selected bases
 * changed: proficiency drop now an absolute delta
 * changed: UAVs will never micronap
+* changed: UAVs get 2x reserve crews
+* changed: enable fatigue tracking by side in wizard
+* changed: set model values by side in wizard
 * changed: calling Enable/Disable() adds & removes special actions
 * changed: update called on prime number intervals
 * changed: circadian term cached

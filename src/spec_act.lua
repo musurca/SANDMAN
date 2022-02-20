@@ -2,40 +2,42 @@
 function Sandman_AddSpecialActions()
     ForEachDo(VP_GetSides(), function(side)
         local sname = side.name
-        SpecialAction_Create(
-            "Fatigue Avoidance Scheduling Tool (All Pilots)",
-            "Shows the current effectiveness state for all of your pilots.",
-            sname,
-            "Sandman_Display()"
-        )
+        if Sandman_Side_Enabled(side.name) then
+            SpecialAction_Create(
+                "Fatigue Avoidance Scheduling Tool (All Pilots)",
+                "Shows the current effectiveness state for all of your pilots.",
+                sname,
+                "Sandman_Display()"
+            )
 
-        SpecialAction_Create(
-            "Fatigue Avoidance Scheduling Tool (Selected Pilots)",
-            "Shows the current effectiveness state for the currently selected aircraft.",
-            sname,
-            "Sandman_DisplaySelected()"
-        )
+            SpecialAction_Create(
+                "Fatigue Avoidance Scheduling Tool (Selected Pilots)",
+                "Shows the current effectiveness state for the currently selected aircraft.",
+                sname,
+                "Sandman_DisplaySelected()"
+            )
 
-        SpecialAction_Create(
-            "View Available Reserve Pilots (All Bases)",
-            "Shows available reserve crews in all friendly bases.",
-            sname,
-            "Sandman_ShowReservesAll()"
-        )
+            SpecialAction_Create(
+                "View Available Reserve Pilots (All Bases)",
+                "Shows available reserve crews in all friendly bases.",
+                sname,
+                "Sandman_ShowReservesAll()"
+            )
 
-        SpecialAction_Create(
-            "View Available Reserve Pilots (Selected Bases)",
-            "Shows available reserve crews in selected friendly bases.",
-            sname,
-            "Sandman_ShowReservesSelected()"
-        )
+            SpecialAction_Create(
+                "View Available Reserve Pilots (Selected Bases)",
+                "Shows available reserve crews in selected friendly bases.",
+                sname,
+                "Sandman_ShowReservesSelected()"
+            )
 
-        SpecialAction_Create(
-            "Set Pilot Replacement Threshold",
-            "Sets the effectiveness threshold below which returning crews will be replaced by available reserves.",
-            sname,
-            "Sandman_InputReserveThreshold()"
-        )
+            SpecialAction_Create(
+                "Set Pilot Replacement Threshold",
+                "Sets the effectiveness threshold below which returning crews will be replaced by available reserves.",
+                sname,
+                "Sandman_InputReserveThreshold()"
+            )
+        end
     end)
 end
 
@@ -43,30 +45,32 @@ end
 function Sandman_RemoveSpecialActions()
     ForEachDo(VP_GetSides(), function(side)
         local sname = side.name
-        SpecialAction_Delete(
-            "Fatigue Avoidance Scheduling Tool (All Pilots)", 
-            sname
-        )
+        if Sandman_Side_Enabled(side.name) then
+            SpecialAction_Delete(
+                "Fatigue Avoidance Scheduling Tool (All Pilots)", 
+                sname
+            )
 
-        SpecialAction_Delete(
-            "Fatigue Avoidance Scheduling Tool (Selected Pilots)",
-            sname
-        )
+            SpecialAction_Delete(
+                "Fatigue Avoidance Scheduling Tool (Selected Pilots)",
+                sname
+            )
 
-        SpecialAction_Delete(
-            "View Available Reserve Pilots (All Bases)",
-            sname
-        )
+            SpecialAction_Delete(
+                "View Available Reserve Pilots (All Bases)",
+                sname
+            )
 
-        SpecialAction_Delete(
-            "View Available Reserve Pilots (Selected Bases)",
-            sname
-        )
+            SpecialAction_Delete(
+                "View Available Reserve Pilots (Selected Bases)",
+                sname
+            )
 
-        SpecialAction_Delete(
-            "Set Pilot Replacement Threshold",
-            sname
-        )
+            SpecialAction_Delete(
+                "Set Pilot Replacement Threshold",
+                sname
+            )
+        end
     end)
 end
 

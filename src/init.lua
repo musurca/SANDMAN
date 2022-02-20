@@ -4,13 +4,15 @@ function Sandman_Init()
     local tracked_guids = {}
     -- find all aircraft to track
     for k, side in ipairs(VP_GetSides()) do
-        for n, unit in ipairs(side.units) do
-            local u = ScenEdit_GetUnit({guid=unit.guid})
-            if u.type=="Aircraft" then
-                table.insert(tracked_guids, unit.guid)
-                local dbid = tostring(u.dbid)
-                dbid_to_name[dbid] = u.classname
-                dbid_to_crew[dbid] = u.crew
+        if Sandman_Side_Enabled(side.name) == true then
+            for n, unit in ipairs(side.units) do
+                local u = ScenEdit_GetUnit({guid=unit.guid})
+                if u.type=="Aircraft" then
+                    table.insert(tracked_guids, unit.guid)
+                    local dbid = tostring(u.dbid)
+                    dbid_to_name[dbid] = u.classname
+                    dbid_to_crew[dbid] = u.crew
+                end
             end
         end
     end
@@ -19,6 +21,24 @@ function Sandman_Init()
 
     for k, v in ipairs(tracked_guids) do
         local ac = ScenEdit_GetUnit({guid=v})
+
+        if ac.crew == 0 then
+            -- For UAVs, add 2x reserves
+            -- to model shift
+            for i=1,2 do
+                Sandman_AddReserveCrew(
+                    sandman.reserve_state,
+                    ac.dbid,
+                    ac.base,
+                    ac.proficiency,
+                    sandman.crew_state,
+                    {
+                        longitude=ac.longitude
+                    }
+                )
+            end
+        end
+
         local isactive = true
         if ac.loadoutdbid == 4 or ac.loadoutdbid == 3 then
             -- under maintenance or reserve
