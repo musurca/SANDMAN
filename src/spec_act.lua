@@ -94,7 +94,7 @@ function Sandman_Display(selected_guids)
     Sandman_CheckInit()
 
     -- formatting for our old-skool HTML tables
-    local table_names = { "UNIT DESIGNATION", "SKILL", "P.A.T.", "EFFECTIVENESS" }
+    local table_names = { "UNIT DESIGNATION", "SKILL", "P.A.T.", "<center>EFFECTIVENESS</center>" }
     local table_header = "<table cellSpacing=1 cols="..#table_names.." cellPadding=1 width=\"95%\" border=2><tbody>"
     table_header = table_header.."<tr>"
     for k, tname in ipairs(table_names) do
@@ -325,7 +325,7 @@ function Sandman_ShowReservesAll(selected_guids)
     Sandman_CheckInit()
 
     -- formatting for our old-skool HTML tables
-    local table_names = { "SKILL", "P.A.T.", "EFFECTIVENESS" }
+    local table_names = { "SKILL", "P.A.T.", "<center>EFFECTIVENESS</center>" }
     local table_header = "<table cellSpacing=1 cols="..#table_names.." cellPadding=1 width=\"95%\" border=2><tbody>"
     table_header = table_header.."<tr>"
     for k, tname in ipairs(table_names) do

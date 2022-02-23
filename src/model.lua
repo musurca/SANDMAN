@@ -68,7 +68,7 @@ function RandomSleepDeficit(min_hrs, max_hrs)
     return SleepDeficit(hrs)
 end
 
-__CIRCADIAN_CACHE_SIZE__ = 20
+__CIRCADIAN_CACHE_SIZE__ = 60
 __CIRCADIAN_CACHE__ = {}
 function BuildCircadianCache()
     local t
