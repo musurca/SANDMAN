@@ -76,7 +76,7 @@ function Sandman_InputSides()
             if use_defaults == true then
                 min_hrs[k] = DEFAULT_MIN_HOURS_AWAKE
                 max_hrs[k] = DEFAULT_MAX_HOURS_AWAKE
-                crash_incid[k] = DEFAULT_CRASH_INCIDENCE
+                crash_incid[k] = DEFAULT_CRASH_INCIDENCE/100000
             else
                 local min_hrs_awake, max_hrs_awake, crash_rate
                 repeat
@@ -109,7 +109,7 @@ function Sandman_InputSides()
             sides_enabled[k] = 0
             min_hrs[k] = DEFAULT_MIN_HOURS_AWAKE
             max_hrs[k] = DEFAULT_MAX_HOURS_AWAKE
-            crash_incid[k] = DEFAULT_CRASH_INCIDENCE
+            crash_incid[k] = DEFAULT_CRASH_INCIDENCE/100000
         end
     end
 

@@ -1,4 +1,4 @@
-SANDMAN_VERSION = "0.2.0"
+SANDMAN_VERSION = "0.2.1"
 
 function Sandman_Wizard()
     local result = Input_YesNo("Thanks for using SANDMAN v"..SANDMAN_VERSION..", the fatigue modeling system for CMO.\n\nHave you saved a backup of this scenario?")
