@@ -1,4 +1,4 @@
-SANDMAN_VERSION = "0.2.1"
+SANDMAN_VERSION = "0.2.2"
 
 function Sandman_Wizard()
     local result = Input_YesNo("Thanks for using SANDMAN v"..SANDMAN_VERSION..", the fatigue modeling system for CMO.\n\nHave you saved a backup of this scenario?")
@@ -26,7 +26,7 @@ function Sandman_Wizard()
     Event_AddTrigger(
         loadEvent,
         Trigger_Create(
-            "PBEM_Scenario_Loaded",
+            "SANDMAN_Scenario_Loaded",
             {
                 type="ScenLoaded"
             }
